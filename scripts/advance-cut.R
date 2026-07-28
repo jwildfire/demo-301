@@ -15,9 +15,14 @@
 #       and ECG carried forward from each participant's own most recent result
 #       with modest noise;
 #     * a handful of unmistakable outliers — six participants pushed to many
-#       multiples of the upper limit of normal on ALT, AST and bilirubin, and
-#       two pushed past the 500 ms QTcF threshold — so the charts have
-#       something to find;
+#       multiples of the upper limit of normal on ALT, AST and bilirubin — so
+#       the charts have something to find;
+#
+#       No ECG outliers are injected, deliberately. The vendored `adeg` already
+#       carries 637 QTcF results above 500 ms out of 1792 (35%), so an injected
+#       prolongation would be invisible against that background and would
+#       misrepresent what this cut actually changed. The ECG data moves by
+#       carry-forward only.
 #     * about twenty new adverse events on existing participants;
 #     * five newly enrolled participants, with a baseline and the new visit.
 #
@@ -58,6 +63,32 @@ write_input <- function(df, name) {
   message(sprintf("  %-18s -> %d rows", name, nrow(df)))
 }
 `%||%` <- function(x, y) if (is.null(x)) y else x
+
+# --- Reading and appending the RBQM family without rewriting it -------------
+#
+# The Raw_* CSVs must never be round-tripped through read.csv + write.csv.
+# Every site identifier in this study has the form `0X4323`, which base R reads
+# as a HEXADECIMAL literal: `read.csv()` turns all 150 of them into decimal
+# integers (`0X4323` -> 17187). Reading with colClasses = "character" is the
+# only way to get the file's actual contents back.
+#
+# So the RBQM family is read as character and appended to as text. The original
+# bytes are never rewritten, which also keeps the diff on `main` an honest
+# append. The appended rows quote every field where the original quoted only
+# some; that is a cosmetic difference inside one valid CSV, and read.csv parses
+# both identically.
+read_raw <- function(name) {
+  utils::read.csv(input(name), colClasses = "character")
+}
+append_raw <- function(df_new, name) {
+  df_new[] <- lapply(df_new, as.character)
+  utils::write.table(
+    df_new, input(name),
+    append = TRUE, sep = ",", row.names = FALSE, col.names = FALSE,
+    quote = TRUE, qmethod = "double", na = ""
+  )
+  message(sprintf("  %-18s += %d rows", name, nrow(df_new)))
+}
 
 # ---------------------------------------------------------------------------
 # Safety family
@@ -157,9 +188,6 @@ new_eg$STRESN <- round(
   new_eg$STRESN * (1 + stats::rnorm(nrow(new_eg), 0, 0.04)),
   1
 )
-qt_outliers <- sample(advancing, 2)
-prolonged <- new_eg$USUBJID %in% qt_outliers & new_eg$TEST %in% c("QTcF", "QTcB")
-new_eg$STRESN[prolonged] <- round(stats::runif(sum(prolonged), 505, 545), 1)
 new_eg$CHG <- round(new_eg$STRESN - new_eg$BASE, 1)
 
 new_eg_subjects <- do.call(rbind, lapply(seq_len(N_NEW_SUBJECTS), function(i) {
@@ -195,9 +223,14 @@ ae_template <- adae[
   drop = FALSE
 ]
 picked <- ae_template[sample(nrow(ae_template), N_NEW_AES), , drop = FALSE]
-max_seq <- tapply(adae$AESEQ, adae$USUBJID, max, na.rm = TRUE)
+# Some participants have no non-missing AESEQ or ASTDY at all, so these
+# maxima come back -Inf. Both are handled below; suppress the noise rather
+# than let a run that is behaving correctly look alarming.
+max_seq <- suppressWarnings(tapply(adae$AESEQ, adae$USUBJID, max, na.rm = TRUE))
 max_day <- suppressWarnings(tapply(adae$ASTDY, adae$USUBJID, max, na.rm = TRUE))
-picked$AESEQ <- as.integer(max_seq[picked$USUBJID]) + seq_len(nrow(picked))
+base_seq <- as.numeric(max_seq[picked$USUBJID])
+base_seq[!is.finite(base_seq)] <- 0
+picked$AESEQ <- as.integer(base_seq) + seq_len(nrow(picked))
 base_day <- as.numeric(max_day[picked$USUBJID])
 base_day[!is.finite(base_day)] <- 180
 picked$ASTDY <- as.integer(base_day + sample(5:40, nrow(picked), replace = TRUE))
@@ -231,10 +264,10 @@ write_input(adeg_out, "adeg.csv")
 # RBQM family
 # ---------------------------------------------------------------------------
 
-raw_subj <- read_input("Raw_SUBJ.csv")
-raw_enroll <- read_input("Raw_ENROLL.csv")
-raw_ae <- read_input("Raw_AE.csv")
-raw_lb <- read_input("Raw_LB.csv")
+raw_subj <- read_raw("Raw_SUBJ.csv")
+raw_enroll <- read_raw("Raw_ENROLL.csv")
+raw_ae <- read_raw("Raw_AE.csv")
+raw_lb <- read_raw("Raw_LB.csv")
 
 if (RBQM_VISIT %in% raw_lb$visnam) {
   stop(
@@ -287,9 +320,14 @@ new_lb$toxgrg_nsv[escalate] <- sample(
   c("3", "4"), sum(escalate), replace = TRUE, prob = c(0.6, 0.4)
 )
 
+# Donors must come from the participants who actually have lab records: only
+# some of Raw_SUBJ appears in Raw_LB, so sampling donors from the advancing set
+# would silently leave the new participants with no labs at all.
+lb_donor_pool <- unique(new_lb$subjid)
+lb_donors <- sample(lb_donor_pool, N_NEW_SUBJECTS)
+
 new_lb_subjects <- do.call(rbind, lapply(seq_len(N_NEW_SUBJECTS), function(i) {
-  donor_id <- raw_advancing[i]
-  donor <- new_lb[new_lb$subjid == donor_id, , drop = FALSE]
+  donor <- new_lb[new_lb$subjid == lb_donors[i], , drop = FALSE]
   if (nrow(donor) == 0L) {
     return(NULL)
   }
@@ -300,7 +338,7 @@ new_lb_subjects <- do.call(rbind, lapply(seq_len(N_NEW_SUBJECTS), function(i) {
   donor
 }))
 
-raw_lb_out <- rbind(raw_lb, new_lb, new_lb_subjects)
+new_lb_all <- rbind(new_lb, new_lb_subjects)
 
 # --- Raw_AE: new adverse events ---
 raw_ae_template <- raw_ae[raw_ae$subjid %in% raw_advancing, , drop = FALSE]
@@ -315,9 +353,9 @@ raw_picked$aest_dt <- as.character(
 raw_picked$aeen_dt <- as.character(
   as.Date(raw_picked$aest_dt) + sample(1:10, N_NEW_AES, replace = TRUE)
 )
-raw_picked$aetoxgr <- sample(
+raw_picked$aetoxgr <- as.character(sample(
   1:4, N_NEW_AES, replace = TRUE, prob = c(0.4, 0.3, 0.2, 0.1)
-)
+))
 raw_picked$aeser <- sample(
   c("N", "Y"), N_NEW_AES, replace = TRUE, prob = c(0.85, 0.15)
 )
@@ -329,12 +367,10 @@ raw_new_ae$aest_dt <- as.character(as.Date(cut_date) + 3)
 raw_new_ae$aeen_dt <- as.character(as.Date(cut_date) + 8)
 raw_new_ae$aeser <- "N"
 
-raw_ae_out <- rbind(raw_ae, raw_picked, raw_new_ae)
-
-message("RBQM family:")
-write_input(rbind(raw_subj, new_subj), "Raw_SUBJ.csv")
-write_input(rbind(raw_enroll, new_enroll), "Raw_ENROLL.csv")
-write_input(raw_ae_out, "Raw_AE.csv")
-write_input(raw_lb_out, "Raw_LB.csv")
+message("RBQM family (appended, originals untouched):")
+append_raw(new_subj, "Raw_SUBJ.csv")
+append_raw(new_enroll, "Raw_ENROLL.csv")
+append_raw(rbind(raw_picked, raw_new_ae), "Raw_AE.csv")
+append_raw(new_lb_all, "Raw_LB.csv")
 
 message("\nData cut advanced. Re-run scripts/run-pipeline.R to produce the next snapshot.")
