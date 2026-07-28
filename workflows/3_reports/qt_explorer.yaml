@@ -1,0 +1,41 @@
+meta:
+  Type: Report
+  ID: qt_explorer
+  Output: html
+  Name: QT Safety Explorer Report
+  Description: Interactive safety.viz QT/QTc safety explorer with central tendency against the ICH E14 threshold, outlier scatter, and categorical summaries.
+  lSettings:
+    placebo_arm: Placebo
+    filters:
+      - value_col: SEX
+        label: Sex
+      - value_col: RACE
+        label: Race
+      - value_col: SITE
+        label: Site
+spec:
+  dfResults:
+    USUBJID:
+      type: character
+    TEST:
+      type: character
+    STRESN:
+      type: numeric
+    BASE:
+      type: numeric
+    ARM:
+      type: character
+steps:
+  - output: strOutputDir
+    name: getwd
+  - output: lWidget
+    name: gsm.safety::Widget_QtExplorer
+    params:
+      dfResults: dfResults
+      lSettings: lSettings
+  - output: strReportPath
+    name: gsm.safety::SaveWidgetReport
+    params:
+      widget: lWidget
+      strOutputDir: strOutputDir
+      strOutputFile: ID

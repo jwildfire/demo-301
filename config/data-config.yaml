@@ -1,0 +1,20 @@
+# data-config.yaml — maps each input data domain to the CSV file that supplies
+# it, relative to the project root. These are the "Raw_*" domains that the
+# mapping workflows read from input/.
+#
+# Any domain a mapping needs but that is not listed here defaults to
+#   input/{domain}.csv
+# so you only need an entry when a file lives somewhere non-standard or is
+# named differently. Run og_validate() to see which domains are found.
+Raw_AE: input/Raw_AE.csv
+Raw_DATACHG: input/Raw_DATACHG.csv
+Raw_DATAENT: input/Raw_DATAENT.csv
+Raw_ENROLL: input/Raw_ENROLL.csv
+Raw_LB: input/Raw_LB.csv
+Raw_PD: input/Raw_PD.csv
+Raw_QUERY: input/Raw_QUERY.csv
+Raw_SDRGCOMP: input/Raw_SDRGCOMP.csv
+Raw_SITE: input/Raw_SITE.csv
+Raw_STUDCOMP: input/Raw_STUDCOMP.csv
+Raw_STUDY: input/Raw_STUDY.csv
+Raw_SUBJ: input/Raw_SUBJ.csv

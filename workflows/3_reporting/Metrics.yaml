@@ -1,0 +1,13 @@
+meta:
+  Type: Reporting
+  ID: Metrics
+  Description: Reporting Metrics Data
+  Priority: 1
+  Active: true
+steps:
+  # lWorkflows is a named list of metric workflows.
+  - output: Reporting_Metrics
+    name: gsm.reporting::MakeMetric
+    params:
+      lWorkflows: lWorkflows
+

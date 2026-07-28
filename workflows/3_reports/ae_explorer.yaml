@@ -1,0 +1,43 @@
+meta:
+  Type: Report
+  ID: ae_explorer
+  Output: html
+  Name: Adverse Event Explorer Report
+  Description: Interactive safety.viz adverse event explorer with per-arm prevalence, between-arm differences, and participant drill-down.
+  lSettings:
+    filters:
+      - value_col: AESEV
+        label: Severity
+      - value_col: AESER
+        label: Serious
+    details:
+      - value_col: AETERM
+        label: Reported Term
+      - value_col: AESEV
+        label: Severity
+      - value_col: ASTDY
+        label: Start Day
+spec:
+  dfResults:
+    USUBJID:
+      type: character
+    AEBODSYS:
+      type: character
+    AEDECOD:
+      type: character
+    ARM:
+      type: character
+steps:
+  - output: strOutputDir
+    name: getwd
+  - output: lWidget
+    name: gsm.safety::Widget_AeExplorer
+    params:
+      dfResults: dfResults
+      lSettings: lSettings
+  - output: strReportPath
+    name: gsm.safety::SaveWidgetReport
+    params:
+      widget: lWidget
+      strOutputDir: strOutputDir
+      strOutputFile: ID

@@ -1,0 +1,51 @@
+meta:
+  Type: Report
+  ID: ae_timelines
+  Output: html
+  Name: AE Timelines Report
+  Description: Interactive safety.viz adverse-event timelines, one row per participant.
+  lSettings:
+    color:
+      value_col: AESEV
+      label: Severity
+    highlight:
+      value_col: AESER
+      label: Serious Event
+      value: Y
+    filters:
+      - value_col: AESER
+        label: Serious Event
+      - value_col: AESEV
+        label: Severity
+      - value_col: ARM
+        label: Treatment Group
+      - value_col: USUBJID
+        label: Participant ID
+    details:
+      - value_col: AEBODSYS
+        label: Body System
+      - value_col: AEDECOD
+        label: Dictionary-Derived Term
+    sort_participants: earliest
+spec:
+  dfResults:
+    USUBJID:
+      type: character
+    AETERM:
+      type: character
+    ASTDY:
+      type: numeric
+steps:
+  - output: strOutputDir
+    name: getwd
+  - output: lWidget
+    name: gsm.safety::Widget_AeTimelines
+    params:
+      dfResults: dfResults
+      lSettings: lSettings
+  - output: strReportPath
+    name: gsm.safety::SaveWidgetReport
+    params:
+      widget: lWidget
+      strOutputDir: strOutputDir
+      strOutputFile: ID

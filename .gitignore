@@ -1,0 +1,20 @@
+# og_run() writes output/ locally; the published copy lives on the site branch,
+# not on main. Delete it and re-run any time.
+output/
+
+# The app shell is copied in by og_init() from the installed open.gismo and is
+# regenerated on publish, so main does not carry a stale copy.
+index.html
+
+# Snapshot payload files written by og_run() at the project root.
+_index.json
+status.json
+reports.json
+snapshots.json
+
+# R / editor noise
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+.DS_Store

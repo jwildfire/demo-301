@@ -1,0 +1,119 @@
+# run-pipeline.yaml — TEMPLATE, NOT YET EXERCISED.
+#
+# Status (2026-07-28, hub#134 stage 3): this workflow is a plausible, reviewed
+# sketch of the Actions lane. It has never been run. The lane that is real
+# today is the LOCAL one:
+#
+#   R -e 'open.gismo::og_validate(".")'
+#   R -e 'open.gismo::og_run(".")'
+#   R -e 'open.gismo::og_app(".")'
+#
+# Local runs and Actions runs are supposed to write the identical static tree
+# (_index.json, status.json, manifest.csv, output/{phase}/{workflow}/...), so
+# turning this on is an acceptance step, not a rewrite. Do not assume it is
+# green until a run is recorded on this repo.
+#
+# Adapted from open.gismo's .github/workflows/run-pipeline.yaml, with two
+# deliberate changes:
+#   * Public-only. No secrets beyond the built-in GITHUB_TOKEN.
+#   * Manifest-install lane. Packages are installed by cloning each repo at the
+#     SHA pinned in manifest.csv and running R CMD INSTALL, rather than via
+#     pak::pkg_install(). pak resolves GitHub refs through api.github.com,
+#     which SSO/SAML-protected orgs reject even for public repos; a plain git
+#     clone of a public repo does not hit that path.
+
+name: Run Pipeline
+
+"on":
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Push the resulting snapshot to the site branch'
+        required: false
+        type: boolean
+        default: true
+  schedule:
+    # Weekly, Mondays 06:00 UTC.
+    - cron: '0 6 * * 1'
+
+permissions:
+  contents: write
+
+concurrency:
+  # One pipeline run at a time: snapshot ids are allocated by read-modify-write
+  # on the site branch, which races if two runs overlap.
+  group: demo-301-pipeline
+  cancel-in-progress: false
+
+jobs:
+  run-pipeline:
+    runs-on: ubuntu-latest
+    env:
+      SITE_BRANCH: site
+    steps:
+      - name: Check out the study repo
+        uses: actions/checkout@v4
+
+      - name: Set up R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: 'release'
+          use-public-rspm: true
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev
+
+      - name: Install CRAN dependencies
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          packages: |
+            any::yaml
+            any::jsonlite
+            any::dplyr
+            any::purrr
+            any::tidyr
+            any::htmlwidgets
+            any::remotes
+
+      - name: Install pipeline packages pinned in manifest.csv
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/pkgsrc
+          # Column order is fixed by the manifest contract:
+          #   org,package,version,repository,url,sha
+          tail -n +2 manifest.csv | while IFS=, read -r org package version repository url sha; do
+            [ -z "$package" ] && continue
+            echo "::group::$org/$package ($version)"
+            git clone --quiet "https://github.com/$org/$package.git" "/tmp/pkgsrc/$package"
+            if [ -n "$sha" ]; then
+              git -C "/tmp/pkgsrc/$package" checkout --quiet "$sha"
+            else
+              echo "WARNING: no SHA pinned for $package — installing the default branch tip."
+            fi
+            R CMD INSTALL --no-docs --no-multiarch "/tmp/pkgsrc/$package"
+            echo "::endgroup::"
+          done
+
+      - name: Validate input data against the mapping specs
+        run: Rscript -e 'v <- open.gismo::og_validate("."); print(v); if (any(v$status %in% c("missing", "error"))) stop("Input validation failed.")'
+
+      - name: Run the pipeline
+        run: Rscript -e 'open.gismo::og_run(".")'
+
+      - name: Publish the snapshot to the site branch
+        if: ${{ github.event_name == 'schedule' || inputs.publish }}
+        run: |
+          set -euo pipefail
+          git config user.name  'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git fetch origin "$SITE_BRANCH" || true
+          git switch "$SITE_BRANCH" 2>/dev/null || git switch --orphan "$SITE_BRANCH"
+          # The site branch root IS the published artifact — see build-site.yaml.
+          # -f because .gitignore keeps these generated payload files off main;
+          # on the site branch they are the point.
+          git add -f index.html _index.json status.json manifest.csv
+          git add -f output workflows config
+          git commit -m "Snapshot from ${GITHUB_SHA:0:7} (run ${GITHUB_RUN_ID})" || echo "Nothing to publish."
+          git push origin "$SITE_BRANCH"

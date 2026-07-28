@@ -1,0 +1,80 @@
+# build-site.yaml — TEMPLATE, NOT YET EXERCISED.
+#
+# Status (2026-07-28, hub#134 stage 3): this workflow is a plausible, reviewed
+# sketch. It has never been run, and GitHub Pages is not enabled on this repo
+# yet. The lane that is real today is local: og_run() writes the tree and
+# og_app() serves it from disk.
+#
+# There is no build step, by design. The `site` branch root IS the artifact:
+# run-pipeline.yaml writes the static tree onto that branch, and this workflow
+# uploads it verbatim after asserting the five-file contract the app depends
+# on. Nothing here compiles, bundles, or templates anything.
+#
+# The five-file contract (assert before publishing — a half-written tree is
+# worse than a stale one):
+#   index.html    the app shell
+#   _index.json   the payload index the app fetches first
+#   manifest.csv  the environment record behind the provenance chip
+#   workflows/    the YAMLs that produced this snapshot
+#   output/       the artifacts themselves
+#
+# Adapted from open.gismo's .github/workflows/build-site.yaml (which publishes
+# its `demo` branch the same way).
+
+name: Build Site
+
+"on":
+  push:
+    branches:
+      - site
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: demo-301-pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Check out the site branch
+        uses: actions/checkout@v4
+        with:
+          ref: site
+          fetch-depth: 1
+
+      - name: Assert the five-file contract
+        run: |
+          set -euo pipefail
+          fail=0
+          for f in index.html _index.json manifest.csv; do
+            if [ ! -f "$f" ]; then echo "MISSING FILE: $f"; fail=1; fi
+          done
+          for d in workflows output; do
+            if [ ! -d "$d" ]; then echo "MISSING DIRECTORY: $d"; fail=1; fi
+          done
+          if [ "$fail" -ne 0 ]; then
+            echo "The site branch does not satisfy the artifact contract — refusing to publish."
+            exit 1
+          fi
+          echo "Contract satisfied: index.html, _index.json, manifest.csv, workflows/, output/"
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload the branch root, verbatim
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

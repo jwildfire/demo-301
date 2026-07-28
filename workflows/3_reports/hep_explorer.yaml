@@ -1,0 +1,49 @@
+meta:
+  Type: Report
+  ID: hep_explorer
+  Output: html
+  Name: Hepatic Safety Explorer Report
+  Description: Interactive safety.viz eDISH hepatic safety explorer with Hy's Law quadrants and participant drill-down.
+  lSettings:
+    studyday_col: VISITNUM
+    visit_col: VISIT
+    visitn_col: VISITNUM
+    measure_values:
+      ALT: Alanine Aminotransferase
+      AST: Aspartate Aminotransferase
+      TB: Bilirubin
+      ALP: Alkaline Phosphatase
+    filters:
+      - value_col: SEX
+        label: Sex
+      - value_col: ARM
+        label: Treatment Group
+    groups:
+      - value_col: ARM
+        label: Treatment Group
+      - value_col: SEX
+        label: Sex
+spec:
+  dfResults:
+    USUBJID:
+      type: character
+    TEST:
+      type: character
+    STRESN:
+      type: numeric
+    STNRHI:
+      type: numeric
+steps:
+  - output: strOutputDir
+    name: getwd
+  - output: lWidget
+    name: gsm.safety::Widget_HepExplorer
+    params:
+      dfResults: dfResults
+      lSettings: lSettings
+  - output: strReportPath
+    name: gsm.safety::SaveWidgetReport
+    params:
+      widget: lWidget
+      strOutputDir: strOutputDir
+      strOutputFile: ID
