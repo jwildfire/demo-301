@@ -100,7 +100,10 @@ jobs:
         run: Rscript -e 'v <- open.gismo::og_validate("."); print(v); if (any(v$status %in% c("missing", "error"))) stop("Input validation failed.")'
 
       - name: Run the pipeline
-        run: Rscript -e 'open.gismo::og_run(".")'
+        # Not og_run() directly: og_run() covers the four RBQM phases but not
+        # workflows/3_reports (the safety charts). scripts/run-pipeline.R runs
+        # both, in the order that leaves status.json describing both.
+        run: Rscript scripts/run-pipeline.R .
 
       - name: Publish the snapshot to the site branch
         if: ${{ github.event_name == 'schedule' || inputs.publish }}
@@ -109,11 +112,21 @@ jobs:
           git config user.name  'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git fetch origin "$SITE_BRANCH" || true
-          git switch "$SITE_BRANCH" 2>/dev/null || git switch --orphan "$SITE_BRANCH"
-          # The site branch root IS the published artifact — see build-site.yaml.
-          # -f because .gitignore keeps these generated payload files off main;
-          # on the site branch they are the point.
-          git add -f index.html _index.json status.json manifest.csv
-          git add -f output workflows config
-          git commit -m "Snapshot from ${GITHUB_SHA:0:7} (run ${GITHUB_RUN_ID})" || echo "Nothing to publish."
-          git push origin "$SITE_BRANCH"
+          # A worktree, not a branch switch: the run's output/ lives in this
+          # checkout and publish-snapshot.py copies out of it.
+          if git rev-parse --verify "origin/$SITE_BRANCH" >/dev/null 2>&1; then
+            git worktree add ../site "origin/$SITE_BRANCH" --detach
+            git -C ../site switch -c "$SITE_BRANCH"
+          else
+            EMPTY_TREE=$(git hash-object -t tree /dev/null)
+            git branch "$SITE_BRANCH" "$(git commit-tree "$EMPTY_TREE" -m 'Start the site branch')"
+            git worktree add ../site "$SITE_BRANCH"
+          fi
+          # Arranges the site branch root (current snapshot, flat) and the
+          # ps-NNN/ history directory, and updates snapshots.json.
+          python3 scripts/publish-snapshot.py ../site "gha-${GITHUB_RUN_ID}" \
+            --package-snapshot "manifest-${GITHUB_SHA:0:7}" --project-dir .
+          git -C ../site add -A
+          git -C ../site commit -m "Snapshot from ${GITHUB_SHA:0:7} (run ${GITHUB_RUN_ID})" \
+            || echo "Nothing to publish."
+          git -C ../site push origin "$SITE_BRANCH"

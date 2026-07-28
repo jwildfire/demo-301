@@ -1,0 +1,70 @@
+# run-pipeline.R — the one entry point that produces a complete DEMO-301
+# snapshot. Both lanes (local and Actions) call this, so both write the same
+# tree.
+#
+#   1. Safety domain  — workflows/3_reports  (scripts/run-safety-reports.R)
+#   2. RBQM domain    — workflows/1_mappings, 2_metrics, 3_reporting,
+#                       4_modules            (open.gismo::og_run)
+#
+# Order is deliberate. og_run() regenerates _index.json and status.json by
+# scanning what is on disk, so the Safety charts must already exist when it
+# runs or they are recorded as `not_run`.
+#
+# Usage:
+#   Rscript scripts/run-pipeline.R [project_dir]
+
+args <- commandArgs(trailingOnly = TRUE)
+project_dir <- normalizePath(
+  if (length(args) >= 1) args[[1]] else ".",
+  mustWork = TRUE
+)
+
+script_dir <- file.path(project_dir, "scripts")
+
+# --- The curated manifest ---------------------------------------------------
+#
+# manifest.csv on main is hand-curated: it names the org each package actually
+# lives under (gsm.safety and open.gismo are `jwildfire`, not
+# `Gilead-BioStats`) and pins a commit SHA per package. The Actions lane clones
+# and installs from exactly those fields, so they have to survive a run.
+#
+# open.gismo::og_run() ends by calling its own manifest writer, which
+# regenerates the file from the installed library: it hardcodes org
+# "Gilead-BioStats" for every package, writes an empty url/sha, and omits
+# gsm.safety entirely. That turns a reproducible pin into an unpinned
+# default-branch install. Until that is fixed upstream, hold the curated
+# contents across the run and write them back.
+manifest_path <- file.path(project_dir, "manifest.csv")
+curated_manifest <- if (file.exists(manifest_path)) {
+  readLines(manifest_path, warn = FALSE)
+} else {
+  NULL
+}
+
+# --- 1. Safety domain -------------------------------------------------------
+message("=== Safety domain: workflows/3_reports ===")
+safety <- system2(
+  file.path(R.home("bin"), "Rscript"),
+  c(shQuote(file.path(script_dir, "run-safety-reports.R")), shQuote(project_dir))
+)
+
+# --- 2. RBQM domain ---------------------------------------------------------
+message("=== RBQM domain: og_run() ===")
+res <- open.gismo::og_run(project_dir)
+
+# --- 3. Restore the curated manifest ---------------------------------------
+if (!is.null(curated_manifest)) {
+  writeLines(curated_manifest, manifest_path)
+  message("Restored the curated manifest.csv.")
+}
+
+message("\n=== counts ===")
+print(res$counts)
+message("=== timings (s) ===")
+print(res$timings)
+
+if (!identical(safety, 0L)) {
+  message(
+    "\nNOTE: the Safety chart lane exited non-zero - see output/3_reports/reports.json."
+  )
+}

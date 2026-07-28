@@ -2,6 +2,7 @@ meta:
   Type: Report
   ID: safety_outlier_explorer
   Output: html
+  Data: adbds
   Name: Safety Outlier Explorer Report
   Description: Interactive safety.viz outlier explorer of long-format labs and vitals results.
   lSettings:

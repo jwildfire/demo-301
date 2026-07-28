@@ -2,6 +2,7 @@ meta:
   Type: Report
   ID: ae_timelines
   Output: html
+  Data: adae
   Name: AE Timelines Report
   Description: Interactive safety.viz adverse-event timelines, one row per participant.
   lSettings:

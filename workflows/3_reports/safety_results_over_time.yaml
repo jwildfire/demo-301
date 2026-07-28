@@ -2,6 +2,7 @@ meta:
   Type: Report
   ID: safety_results_over_time
   Output: html
+  Data: adbds
   Name: Safety Results Over Time Report
   Description: Interactive safety.viz results-over-time chart of long-format labs and vitals across visits.
   lSettings:

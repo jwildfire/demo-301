@@ -2,6 +2,7 @@ meta:
   Type: Report
   ID: ae_explorer
   Output: html
+  Data: adae
   Name: Adverse Event Explorer Report
   Description: Interactive safety.viz adverse event explorer with per-arm prevalence, between-arm differences, and participant drill-down.
   lSettings:

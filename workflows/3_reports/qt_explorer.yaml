@@ -2,6 +2,7 @@ meta:
   Type: Report
   ID: qt_explorer
   Output: html
+  Data: adeg
   Name: QT Safety Explorer Report
   Description: Interactive safety.viz QT/QTc safety explorer with central tendency against the ICH E14 threshold, outlier scatter, and categorical summaries.
   lSettings:

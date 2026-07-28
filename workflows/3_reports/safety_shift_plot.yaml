@@ -2,6 +2,7 @@ meta:
   Type: Report
   ID: safety_shift_plot
   Output: html
+  Data: adbds
   Name: Safety Shift Plot Report
   Description: Interactive safety.viz shift plot pairing baseline and comparison visit results.
   lSettings:

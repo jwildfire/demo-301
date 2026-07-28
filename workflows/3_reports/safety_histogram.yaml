@@ -2,6 +2,7 @@ meta:
   Type: Report
   ID: safety_histogram
   Output: html
+  Data: adbds
   Name: Safety Histogram Report
   Description: Interactive safety.viz histogram of long-format labs and vitals results.
   lSettings:

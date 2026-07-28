@@ -18,3 +18,12 @@ Raw_SITE: input/Raw_SITE.csv
 Raw_STUDCOMP: input/Raw_STUDCOMP.csv
 Raw_STUDY: input/Raw_STUDY.csv
 Raw_SUBJ: input/Raw_SUBJ.csv
+
+# Safety domain inputs (workflows/3_reports). These are ADaM-shaped
+# (USUBJID / TEST / STRESN / ARM / VISIT), a different source family from the
+# Raw_* domains above — see scripts/make-safety-inputs.R for why, and the
+# "Two source families" section of the README. Each chart workflow names the
+# domain it reads in its own `meta.Data` key.
+adbds: input/adbds.csv
+adae: input/adae.csv
+adeg: input/adeg.csv

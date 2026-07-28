@@ -5,10 +5,10 @@ A complete, forkable clinical study repository for
 needs — configuration, workflows, input data, and the environment record — lives
 here as plain files. No database, no server, no build step.
 
-**The data in this repository is synthetic.** It is derived from
-`gsm.core::lSource`, the example source data shipped with the gsm analytics
-packages. No real participant, site, or study data appears anywhere in this
-repo, and none ever should.
+**The data in this repository is synthetic.** No real participant, site, or
+study data appears anywhere in this repo, and none ever should. It comes from
+two example datasets shipped with the analytics packages — see [Two source
+families](#two-source-families) below.
 
 ## Fork it and it runs
 
@@ -28,22 +28,67 @@ request against this repo — configuration as code, with one approval trail.
 
 > **Status (2026-07-28):** the local lane is the real one today. The two
 > workflows under `.github/workflows/` are reviewed templates that have not yet
-> been exercised, and GitHub Pages is not enabled on this repo. Locally,
-> `og_validate()` passes on all 12 input domains. See
-> [hub#134](https://github.com/jwildfire/obot.roadmap/issues/134) for where this
-> sits in the plan.
+> been exercised, and GitHub Pages is not enabled on this repo. Locally, the
+> full pipeline runs end to end and two published snapshots live on the `site`
+> branch. See [hub#134](https://github.com/jwildfire/obot.roadmap/issues/134)
+> for where this sits in the plan.
 
 ## Running it locally
 
 ```r
 # install.packages("remotes"); remotes::install_github("jwildfire/open.gismo")
 open.gismo::og_validate(".")   # are the inputs ready?
-open.gismo::og_run(".")        # run every phase, write output/
 open.gismo::og_app(".")        # explore the results
+```
+
+```sh
+Rscript scripts/run-pipeline.R .   # run every phase of both domains
 ```
 
 `og_validate()` is the forgiveness layer: it names exactly which domain, file,
 and column is missing rather than failing deep inside a pipeline step.
+
+`scripts/run-pipeline.R` is the entry point rather than `og_run()` alone,
+because `og_run()` covers the four RBQM phases but not `workflows/3_reports/`.
+The script runs the safety charts first, then `og_run()`, so the payload files
+`og_run()` regenerates describe both domains.
+
+## Two source families
+
+The two domains need two different data shapes, so the study carries two
+synthetic source families. Both are example data shipped with the packages;
+neither describes a real study, and they describe *different* participant sets.
+
+| Family | Files | Derived from | Columns |
+| --- | --- | --- | --- |
+| RBQM | `input/Raw_*.csv` | `gsm.core::lSource` | `studyid` / `subjid` / `invid` |
+| Safety | `input/adbds.csv`, `adae.csv`, `adeg.csv` | `gsm.safety::ExampleData()` | `USUBJID` / `TEST` / `STRESN` / `ARM` |
+
+The `Raw_*` family cannot feed the safety charts: `Raw_LB` carries a toxicity
+grade but no numeric result, no reference range, and no baseline, and no `Raw_*`
+domain carries a treatment arm. Every workflow in `workflows/3_reports/` needs
+at least `USUBJID` + `TEST` + `STRESN`, and several need `ARM`, `BASE`, or
+`STNRHI`. Rather than invent those values, the safety domain uses gsm.safety's
+packaged ADaM example data and says so. `scripts/make-safety-inputs.R`
+regenerates those three CSVs from the pinned package.
+
+Each chart workflow names the domain it reads in its own `meta.Data` key
+(`Data: adbds`), and that domain resolves to a file through
+`config/data-config.yaml` — the same indirection the mapping workflows use.
+
+## Snapshots and data cuts
+
+The `site` branch carries one Project Snapshot per pipeline run. Its root is the
+current snapshot, flat; `ps-NNN/` directories hold the history, indexed by
+`snapshots.json`. `scripts/publish-snapshot.py` writes both, and the branch's
+`PUBLISHING.md` documents the layout.
+
+`scripts/advance-cut.R` moves the study forward by one data cut, deterministically
+(fixed seed, append-only): a later visit for about a third of participants with a
+handful of unmistakable outliers, about twenty new adverse events, and five newly
+enrolled participants, applied to both source families. Two snapshots of the same
+code over two data cuts is the whole point of the snapshot model, and this script
+is how the second cut is reproducible rather than hand-made.
 
 ## Layout
 
@@ -59,8 +104,14 @@ workflows/             analysis workflows, snapshotted from the packages
   3_reporting/         the reporting data model       (gsm.reporting)
   3_reports/           safety chart reports           (gsm.safety)
   4_modules/           KRI report modules             (gsm.kri)
-input/                 study data — synthetic Raw_*.csv
-output/                results written by og_run() (regenerable; not committed)
+input/                 study data — synthetic; two source families (below)
+output/                results written by the pipeline (regenerable; not committed)
+scripts/
+  run-pipeline.R       the entry point: safety charts, then og_run()
+  run-safety-reports.R workflows/3_reports, which og_run() does not cover
+  make-safety-inputs.R regenerates the safety domain's input CSVs
+  advance-cut.R        advances the inputs by one data cut, deterministically
+  publish-snapshot.py  copies a completed run onto the site branch
 .github/workflows/     the Actions lane (templates — see the status note above)
 ```
 
