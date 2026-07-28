@@ -1,0 +1,85 @@
+{
+  "reports": [
+    {
+      "id": "ae_explorer",
+      "title": "Adverse Event Explorer Report",
+      "description": "Interactive safety.viz adverse event explorer with per-arm prevalence, between-arm differences, and participant drill-down.",
+      "data": "adae",
+      "html": "output/3_reports/ae_explorer/ae_explorer.html",
+      "status": "completed",
+      "error": null
+    },
+    {
+      "id": "ae_timelines",
+      "title": "AE Timelines Report",
+      "description": "Interactive safety.viz adverse-event timelines, one row per participant.",
+      "data": "adae",
+      "html": "output/3_reports/ae_timelines/ae_timelines.html",
+      "status": "completed",
+      "error": null
+    },
+    {
+      "id": "hep_explorer",
+      "title": "Hepatic Safety Explorer Report",
+      "description": "Interactive safety.viz eDISH hepatic safety explorer with Hy's Law quadrants and participant drill-down.",
+      "data": "adbds",
+      "html": "output/3_reports/hep_explorer/hep_explorer.html",
+      "status": "completed",
+      "error": null
+    },
+    {
+      "id": "qt_explorer",
+      "title": "QT Safety Explorer Report",
+      "description": "Interactive safety.viz QT/QTc safety explorer with central tendency against the ICH E14 threshold, outlier scatter, and categorical summaries.",
+      "data": "adeg",
+      "html": "output/3_reports/qt_explorer/qt_explorer.html",
+      "status": "completed",
+      "error": null
+    },
+    {
+      "id": "safety_delta_delta",
+      "title": "Safety Delta-Delta Report",
+      "description": "Interactive safety.viz delta-delta plot of change-from-baseline in two labs measures.",
+      "data": "adbds",
+      "html": "output/3_reports/safety_delta_delta/safety_delta_delta.html",
+      "status": "completed",
+      "error": null
+    },
+    {
+      "id": "safety_histogram",
+      "title": "Safety Histogram Report",
+      "description": "Interactive safety.viz histogram of long-format labs and vitals results.",
+      "data": "adbds",
+      "html": "output/3_reports/safety_histogram/safety_histogram.html",
+      "status": "completed",
+      "error": null
+    },
+    {
+      "id": "safety_outlier_explorer",
+      "title": "Safety Outlier Explorer Report",
+      "description": "Interactive safety.viz outlier explorer of long-format labs and vitals results.",
+      "data": "adbds",
+      "html": "output/3_reports/safety_outlier_explorer/safety_outlier_explorer.html",
+      "status": "completed",
+      "error": null
+    },
+    {
+      "id": "safety_results_over_time",
+      "title": "Safety Results Over Time Report",
+      "description": "Interactive safety.viz results-over-time chart of long-format labs and vitals across visits.",
+      "data": "adbds",
+      "html": "output/3_reports/safety_results_over_time/safety_results_over_time.html",
+      "status": "completed",
+      "error": null
+    },
+    {
+      "id": "safety_shift_plot",
+      "title": "Safety Shift Plot Report",
+      "description": "Interactive safety.viz shift plot pairing baseline and comparison visit results.",
+      "data": "adbds",
+      "html": "output/3_reports/safety_shift_plot/safety_shift_plot.html",
+      "status": "completed",
+      "error": null
+    }
+  ]
+}
