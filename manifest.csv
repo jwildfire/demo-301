@@ -1,7 +1,7 @@
 org,package,version,repository,url,sha
 Gilead-BioStats,gsm.core,1.2.0,https://github.com/Gilead-BioStats/gsm.core,https://github.com/Gilead-BioStats/gsm.core/tree/7f3bd8b55961de29d70aaff1d61f09ee1a44b1d4,7f3bd8b55961de29d70aaff1d61f09ee1a44b1d4
 Gilead-BioStats,gsm.mapping,1.1.3,https://github.com/Gilead-BioStats/gsm.mapping,https://github.com/Gilead-BioStats/gsm.mapping/tree/aae161cee2cfcda5b29b91123a5953f6f19b725c,aae161cee2cfcda5b29b91123a5953f6f19b725c
-Gilead-BioStats,gsm.kri,1.5.0,https://github.com/Gilead-BioStats/gsm.kri,,
+Gilead-BioStats,gsm.kri,1.5.0,https://github.com/Gilead-BioStats/gsm.kri,https://github.com/Gilead-BioStats/gsm.kri/tree/e3236c7f328ed071239f9109a946b598cb65bda4,e3236c7f328ed071239f9109a946b598cb65bda4
 Gilead-BioStats,gsm.reporting,1.1.5,https://github.com/Gilead-BioStats/gsm.reporting,https://github.com/Gilead-BioStats/gsm.reporting/tree/828ee8e66e8526bc1aff59b1fe55530b7649f45f,828ee8e66e8526bc1aff59b1fe55530b7649f45f
 Gilead-BioStats,workr,1.0.0,https://github.com/Gilead-BioStats/workr,https://github.com/Gilead-BioStats/workr/tree/1f8fbe9082453e9a23534be46e999a9a6ccb3d47,1f8fbe9082453e9a23534be46e999a9a6ccb3d47
 jwildfire,gsm.safety,1.0.0,https://github.com/jwildfire/gsm.safety,https://github.com/jwildfire/gsm.safety/tree/885decc0c4c93a0e4af2b0e526027ed372bc2936,885decc0c4c93a0e4af2b0e526027ed372bc2936
