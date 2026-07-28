@@ -1,0 +1,4 @@
+"GroupID","GroupLevel","Numerator","Denominator","Metric","Score","Flag"
+"UK","Country",8,229,0.0349344978165939,1.33354092181921,0
+"US","Country",5,316,0.0158227848101266,-0.246478120130186,0
+"Japan","Country",1,215,0.00465116279069767,NA,NA

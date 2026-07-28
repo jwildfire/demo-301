@@ -1,0 +1,42 @@
+# study-config.yaml — study identity and the domain registry.
+#
+# Two blocks live here:
+#
+#   1. Identity. The flat StudyID/StudyName/StudyTitle keys are what the
+#      open.gismo engine reads today (og_validate(), og_run(), og_app()); the
+#      nested `study:` block is the richer identity shape from the data & config
+#      framework design (D-FW7). Both are kept in sync until the engine adopts
+#      the nested form.
+#
+#   2. Domain registry (D-APP7 / D-FW7). A domain is a config entry, not code:
+#      a label, the chart bundle that renders it, and the workflow phases that
+#      produce its data. Adding a domain is a pull request against this file.
+#
+# Both domains share 1_mappings — mapping is study-level, and domains are
+# lenses over the mapped data.
+#
+# Note on `3_reports`: gsm.safety names its chart phase `3_reports` while
+# gsm.reporting/open.gismo use `3_reporting`. Rather than rename gsm.safety's
+# directory, the two phases are listed explicitly here — this registry is the
+# mapping. That is the D-FW5 "map explicitly in domain config" resolution.
+
+StudyID: DEMO-301
+StudyName: "DEMO-301"
+StudyTitle: "DEMO-301 — Safety Review"
+
+study:
+  id: DEMO-301
+  label: "DEMO-301 — Safety Review"
+  phase: "Phase 2"
+  synthetic: true
+  source: "gsm.core example source"
+
+domains:
+  safety:
+    label: Safety
+    charts: safety.viz
+    workflows: [1_mappings, 3_reports]
+  rbqm:
+    label: RBQM
+    charts: gsm.viz
+    workflows: [1_mappings, 2_metrics, 3_reporting, 4_modules]

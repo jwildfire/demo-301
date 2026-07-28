@@ -1,0 +1,13 @@
+# packages.yaml — informational list of the packages whose workflows this
+# project snapshots. The versions and commit SHAs actually used are recorded in
+# manifest.csv; this file just documents where the workflows came from.
+packages:
+  - Gilead-BioStats/gsm.core
+  - Gilead-BioStats/gsm.mapping
+  - Gilead-BioStats/gsm.kri
+  - Gilead-BioStats/gsm.reporting
+  - Gilead-BioStats/workr
+  # Safety-domain chart workflows (workflows/3_reports/).
+  - jwildfire/gsm.safety
+  # The engine itself.
+  - jwildfire/open.gismo

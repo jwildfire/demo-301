@@ -1,0 +1,59 @@
+meta:
+  Type: Report
+  ID: safety_outlier_explorer
+  Output: html
+  Data: adbds
+  Name: Safety Outlier Explorer Report
+  Description: Interactive safety.viz outlier explorer of long-format labs and vitals results.
+  lSettings:
+    filters:
+      - value_col: SITEID
+        label: Site ID
+      - value_col: SEX
+        label: Sex
+      - value_col: RACE
+        label: Race
+      - value_col: ARM
+        label: Treatment Group
+    groups:
+      - value_col: ARM
+        label: Treatment Group
+      - value_col: SEX
+        label: Sex
+      - value_col: RACE
+        label: Race
+      - value_col: SITE
+        label: Site
+    details:
+      - value_col: USUBJID
+        label: Participant ID
+      - value_col: STRESN
+        label: Result
+      - value_col: SEX
+        label: Sex
+      - value_col: RACE
+        label: Race
+      - value_col: ARM
+        label: Treatment Group
+spec:
+  dfResults:
+    USUBJID:
+      type: character
+    TEST:
+      type: character
+    STRESN:
+      type: numeric
+steps:
+  - output: strOutputDir
+    name: getwd
+  - output: lWidget
+    name: gsm.safety::Widget_OutlierExplorer
+    params:
+      dfResults: dfResults
+      lSettings: lSettings
+  - output: strReportPath
+    name: gsm.safety::SaveWidgetReport
+    params:
+      widget: lWidget
+      strOutputDir: strOutputDir
+      strOutputFile: ID

@@ -1,0 +1,25 @@
+{
+  "size_limit_bytes": 5242880,
+  "omitted": [
+    {
+      "path": "output/1_mappings/DATACHG/Mapped_DATACHG.csv",
+      "bytes": 67951037,
+      "reason": "mapping output is a re-serialization of the input CSV of the same name; the input is versioned on main"
+    },
+    {
+      "path": "output/1_mappings/DATAENT/Mapped_DATAENT.csv",
+      "bytes": 53978210,
+      "reason": "mapping output is a re-serialization of the input CSV of the same name; the input is versioned on main"
+    },
+    {
+      "path": "output/1_mappings/LB/Mapped_LB.csv",
+      "bytes": 61610745,
+      "reason": "mapping output is a re-serialization of the input CSV of the same name; the input is versioned on main"
+    },
+    {
+      "path": "output/1_mappings/QUERY/Mapped_QUERY.csv",
+      "bytes": 13945715,
+      "reason": "mapping output is a re-serialization of the input CSV of the same name; the input is versioned on main"
+    }
+  ]
+}

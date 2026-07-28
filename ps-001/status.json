@@ -1,0 +1,1260 @@
+{
+  "pipeline_status": "completed",
+  "workflows": {
+    "Mapped_AE": {
+      "workflow_id": "AE",
+      "workflow_type": "Mapped",
+      "phase": "1_mappings",
+      "status": "completed",
+      "steps": [
+        {
+          "name": "=",
+          "output": "Mapped_AE",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    },
+    "Mapped_COUNTRY": {
+      "workflow_id": "COUNTRY",
+      "workflow_type": "Mapped",
+      "phase": "1_mappings",
+      "status": "completed",
+      "steps": [
+        {
+          "name": "gsm.mapping::MakeLongMeta",
+          "output": "Mapped_COUNTRY",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    },
+    "Mapped_DATACHG": {
+      "workflow_id": "DATACHG",
+      "workflow_type": "Mapped",
+      "phase": "1_mappings",
+      "status": "completed",
+      "steps": [
+        {
+          "name": "dplyr::left_join",
+          "output": "Mapped_DATACHG",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    },
+    "Mapped_DATAENT": {
+      "workflow_id": "DATAENT",
+      "workflow_type": "Mapped",
+      "phase": "1_mappings",
+      "status": "completed",
+      "steps": [
+        {
+          "name": "dplyr::left_join",
+          "output": "Mapped_DATAENT",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    },
+    "Mapped_ENROLL": {
+      "workflow_id": "ENROLL",
+      "workflow_type": "Mapped",
+      "phase": "1_mappings",
+      "status": "completed",
+      "steps": [
+        {
+          "name": "=",
+          "output": "Mapped_ENROLL",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    },
+    "Mapped_LB": {
+      "workflow_id": "LB",
+      "workflow_type": "Mapped",
+      "phase": "1_mappings",
+      "status": "completed",
+      "steps": [
+        {
+          "name": "=",
+          "output": "Mapped_LB",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    },
+    "Mapped_PD": {
+      "workflow_id": "PD",
+      "workflow_type": "Mapped",
+      "phase": "1_mappings",
+      "status": "completed",
+      "steps": [
+        {
+          "name": "=",
+          "output": "Mapped_PD",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    },
+    "Mapped_QUERY": {
+      "workflow_id": "QUERY",
+      "workflow_type": "Mapped",
+      "phase": "1_mappings",
+      "status": "completed",
+      "steps": [
+        {
+          "name": "dplyr::left_join",
+          "output": "Mapped_QUERY",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    },
+    "Mapped_SDRGCOMP": {
+      "workflow_id": "SDRGCOMP",
+      "workflow_type": "Mapped",
+      "phase": "1_mappings",
+      "status": "completed",
+      "steps": [
+        {
+          "name": "=",
+          "output": "Mapped_SDRGCOMP",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    },
+    "Mapped_SITE": {
+      "workflow_id": "SITE",
+      "workflow_type": "Mapped",
+      "phase": "1_mappings",
+      "status": "completed",
+      "steps": [
+        {
+          "name": "dplyr::bind_rows",
+          "output": "Mapped_SITE",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    },
+    "Mapped_STUDCOMP": {
+      "workflow_id": "STUDCOMP",
+      "workflow_type": "Mapped",
+      "phase": "1_mappings",
+      "status": "completed",
+      "steps": [
+        {
+          "name": "=",
+          "output": "Mapped_STUDCOMP",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    },
+    "Mapped_STUDY": {
+      "workflow_id": "STUDY",
+      "workflow_type": "Mapped",
+      "phase": "1_mappings",
+      "status": "completed",
+      "steps": [
+        {
+          "name": "dplyr::bind_rows",
+          "output": "Mapped_STUDY",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    },
+    "Mapped_SUBJ": {
+      "workflow_id": "SUBJ",
+      "workflow_type": "Mapped",
+      "phase": "1_mappings",
+      "status": "completed",
+      "steps": [
+        {
+          "name": "gsm.core::RunQuery",
+          "output": "Mapped_SUBJ",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    },
+    "Analysis_cou0001": {
+      "workflow_id": "cou0001",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "completed",
+      "steps": [
+        {
+          "name": "gsm.core::Input_Rate",
+          "output": "Analysis_Input",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Transform_Rate",
+          "output": "Analysis_Transformed",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "Analyze_NormalApprox",
+          "output": "Analysis_Analyzed",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Flag_NormalApprox",
+          "output": "Analysis_Flagged",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Summarize",
+          "output": "Analysis_Summary",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    },
+    "Analysis_cou0002": {
+      "workflow_id": "cou0002",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "completed",
+      "steps": [
+        {
+          "name": "gsm.core::Input_Rate",
+          "output": "Analysis_Input",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Transform_Rate",
+          "output": "Analysis_Transformed",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "Analyze_NormalApprox",
+          "output": "Analysis_Analyzed",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Flag_NormalApprox",
+          "output": "Analysis_Flagged",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Summarize",
+          "output": "Analysis_Summary",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    },
+    "Analysis_cou0003": {
+      "workflow_id": "cou0003",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "completed",
+      "steps": [
+        {
+          "name": "gsm.core::Input_Rate",
+          "output": "Analysis_Input",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Transform_Rate",
+          "output": "Analysis_Transformed",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "Analyze_NormalApprox",
+          "output": "Analysis_Analyzed",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Flag_NormalApprox",
+          "output": "Analysis_Flagged",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Summarize",
+          "output": "Analysis_Summary",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    },
+    "Analysis_cou0004": {
+      "workflow_id": "cou0004",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "completed",
+      "steps": [
+        {
+          "name": "gsm.core::Input_Rate",
+          "output": "Analysis_Input",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Transform_Rate",
+          "output": "Analysis_Transformed",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "Analyze_NormalApprox",
+          "output": "Analysis_Analyzed",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Flag_NormalApprox",
+          "output": "Analysis_Flagged",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Summarize",
+          "output": "Analysis_Summary",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    },
+    "Analysis_cou0005": {
+      "workflow_id": "cou0005",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "completed",
+      "steps": [
+        {
+          "name": "gsm.core::Input_Rate",
+          "output": "Analysis_Input",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Transform_Rate",
+          "output": "Analysis_Transformed",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "Analyze_NormalApprox",
+          "output": "Analysis_Analyzed",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Flag_NormalApprox",
+          "output": "Analysis_Flagged",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Summarize",
+          "output": "Analysis_Summary",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    },
+    "Analysis_cou0006": {
+      "workflow_id": "cou0006",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "completed",
+      "steps": [
+        {
+          "name": "gsm.core::Input_Rate",
+          "output": "Analysis_Input",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Transform_Rate",
+          "output": "Analysis_Transformed",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "Analyze_NormalApprox",
+          "output": "Analysis_Analyzed",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Flag_NormalApprox",
+          "output": "Analysis_Flagged",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Summarize",
+          "output": "Analysis_Summary",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    },
+    "Analysis_cou0007": {
+      "workflow_id": "cou0007",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "completed",
+      "steps": [
+        {
+          "name": "gsm.core::Input_Rate",
+          "output": "Analysis_Input",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Transform_Rate",
+          "output": "Analysis_Transformed",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "Analyze_NormalApprox",
+          "output": "Analysis_Analyzed",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Flag_NormalApprox",
+          "output": "Analysis_Flagged",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Summarize",
+          "output": "Analysis_Summary",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    },
+    "Analysis_cou0008": {
+      "workflow_id": "cou0008",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "completed",
+      "steps": [
+        {
+          "name": "gsm.core::Input_Rate",
+          "output": "Analysis_Input",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Transform_Rate",
+          "output": "Analysis_Transformed",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "Analyze_NormalApprox",
+          "output": "Analysis_Analyzed",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Flag_NormalApprox",
+          "output": "Analysis_Flagged",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Summarize",
+          "output": "Analysis_Summary",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    },
+    "Analysis_cou0009": {
+      "workflow_id": "cou0009",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "completed",
+      "steps": [
+        {
+          "name": "gsm.core::Input_Rate",
+          "output": "Analysis_Input",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Transform_Rate",
+          "output": "Analysis_Transformed",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "Analyze_NormalApprox",
+          "output": "Analysis_Analyzed",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Flag_NormalApprox",
+          "output": "Analysis_Flagged",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Summarize",
+          "output": "Analysis_Summary",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    },
+    "Analysis_cou0010": {
+      "workflow_id": "cou0010",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "completed",
+      "steps": [
+        {
+          "name": "gsm.core::Input_Rate",
+          "output": "Analysis_Input",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Transform_Rate",
+          "output": "Analysis_Transformed",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "Analyze_NormalApprox",
+          "output": "Analysis_Analyzed",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Flag_NormalApprox",
+          "output": "Analysis_Flagged",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Summarize",
+          "output": "Analysis_Summary",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    },
+    "Analysis_cou0011": {
+      "workflow_id": "cou0011",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "completed",
+      "steps": [
+        {
+          "name": "gsm.core::Input_Rate",
+          "output": "Analysis_Input",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Transform_Rate",
+          "output": "Analysis_Transformed",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "Analyze_NormalApprox",
+          "output": "Analysis_Analyzed",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Flag_NormalApprox",
+          "output": "Analysis_Flagged",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Summarize",
+          "output": "Analysis_Summary",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    },
+    "Analysis_cou0012": {
+      "workflow_id": "cou0012",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "completed",
+      "steps": [
+        {
+          "name": "gsm.core::Input_Rate",
+          "output": "Analysis_Input",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Transform_Rate",
+          "output": "Analysis_Transformed",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "Analyze_NormalApprox",
+          "output": "Analysis_Analyzed",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Flag_NormalApprox",
+          "output": "Analysis_Flagged",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Summarize",
+          "output": "Analysis_Summary",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    },
+    "Analysis_kri0001": {
+      "workflow_id": "kri0001",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "completed",
+      "steps": [
+        {
+          "name": "gsm.core::Input_Rate",
+          "output": "Analysis_Input",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Transform_Rate",
+          "output": "Analysis_Transformed",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "Analyze_NormalApprox",
+          "output": "Analysis_Analyzed",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Flag",
+          "output": "Analysis_Flagged",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Summarize",
+          "output": "Analysis_Summary",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    },
+    "Analysis_kri0002": {
+      "workflow_id": "kri0002",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "completed",
+      "steps": [
+        {
+          "name": "gsm.core::Input_Rate",
+          "output": "Analysis_Input",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Transform_Rate",
+          "output": "Analysis_Transformed",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "Analyze_NormalApprox",
+          "output": "Analysis_Analyzed",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Flag_NormalApprox",
+          "output": "Analysis_Flagged",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Summarize",
+          "output": "Analysis_Summary",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    },
+    "Analysis_kri0003": {
+      "workflow_id": "kri0003",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "completed",
+      "steps": [
+        {
+          "name": "gsm.core::Input_Rate",
+          "output": "Analysis_Input",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Transform_Rate",
+          "output": "Analysis_Transformed",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "Analyze_NormalApprox",
+          "output": "Analysis_Analyzed",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Flag_NormalApprox",
+          "output": "Analysis_Flagged",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Summarize",
+          "output": "Analysis_Summary",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    },
+    "Analysis_kri0004": {
+      "workflow_id": "kri0004",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "completed",
+      "steps": [
+        {
+          "name": "gsm.core::Input_Rate",
+          "output": "Analysis_Input",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Transform_Rate",
+          "output": "Analysis_Transformed",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "Analyze_NormalApprox",
+          "output": "Analysis_Analyzed",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Flag_NormalApprox",
+          "output": "Analysis_Flagged",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Summarize",
+          "output": "Analysis_Summary",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    },
+    "Analysis_kri0005": {
+      "workflow_id": "kri0005",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "completed",
+      "steps": [
+        {
+          "name": "gsm.core::Input_Rate",
+          "output": "Analysis_Input",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Transform_Rate",
+          "output": "Analysis_Transformed",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "Analyze_NormalApprox",
+          "output": "Analysis_Analyzed",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Flag_NormalApprox",
+          "output": "Analysis_Flagged",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Summarize",
+          "output": "Analysis_Summary",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    },
+    "Analysis_kri0006": {
+      "workflow_id": "kri0006",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "completed",
+      "steps": [
+        {
+          "name": "gsm.core::Input_Rate",
+          "output": "Analysis_Input",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Transform_Rate",
+          "output": "Analysis_Transformed",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "Analyze_NormalApprox",
+          "output": "Analysis_Analyzed",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Flag_NormalApprox",
+          "output": "Analysis_Flagged",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Summarize",
+          "output": "Analysis_Summary",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    },
+    "Analysis_kri0007": {
+      "workflow_id": "kri0007",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "completed",
+      "steps": [
+        {
+          "name": "gsm.core::Input_Rate",
+          "output": "Analysis_Input",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Transform_Rate",
+          "output": "Analysis_Transformed",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "Analyze_NormalApprox",
+          "output": "Analysis_Analyzed",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Flag_NormalApprox",
+          "output": "Analysis_Flagged",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Summarize",
+          "output": "Analysis_Summary",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    },
+    "Analysis_kri0008": {
+      "workflow_id": "kri0008",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "completed",
+      "steps": [
+        {
+          "name": "gsm.core::Input_Rate",
+          "output": "Analysis_Input",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Transform_Rate",
+          "output": "Analysis_Transformed",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "Analyze_NormalApprox",
+          "output": "Analysis_Analyzed",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Flag_NormalApprox",
+          "output": "Analysis_Flagged",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Summarize",
+          "output": "Analysis_Summary",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    },
+    "Analysis_kri0009": {
+      "workflow_id": "kri0009",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "completed",
+      "steps": [
+        {
+          "name": "gsm.core::Input_Rate",
+          "output": "Analysis_Input",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Transform_Rate",
+          "output": "Analysis_Transformed",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "Analyze_NormalApprox",
+          "output": "Analysis_Analyzed",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Flag_NormalApprox",
+          "output": "Analysis_Flagged",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Summarize",
+          "output": "Analysis_Summary",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    },
+    "Analysis_kri0010": {
+      "workflow_id": "kri0010",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "completed",
+      "steps": [
+        {
+          "name": "gsm.core::Input_Rate",
+          "output": "Analysis_Input",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Transform_Rate",
+          "output": "Analysis_Transformed",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "Analyze_NormalApprox",
+          "output": "Analysis_Analyzed",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Flag",
+          "output": "Analysis_Flagged",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Summarize",
+          "output": "Analysis_Summary",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    },
+    "Analysis_kri0011": {
+      "workflow_id": "kri0011",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "completed",
+      "steps": [
+        {
+          "name": "gsm.core::Input_Rate",
+          "output": "Analysis_Input",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Transform_Rate",
+          "output": "Analysis_Transformed",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "Analyze_NormalApprox",
+          "output": "Analysis_Analyzed",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Flag",
+          "output": "Analysis_Flagged",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Summarize",
+          "output": "Analysis_Summary",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    },
+    "Analysis_kri0012": {
+      "workflow_id": "kri0012",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "completed",
+      "steps": [
+        {
+          "name": "gsm.core::Input_Rate",
+          "output": "Analysis_Input",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Transform_Rate",
+          "output": "Analysis_Transformed",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "Analyze_NormalApprox",
+          "output": "Analysis_Analyzed",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Flag",
+          "output": "Analysis_Flagged",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Summarize",
+          "output": "Analysis_Summary",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    },
+    "Analysis_srs0001": {
+      "workflow_id": "srs0001",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "completed",
+      "steps": [
+        {
+          "name": "gsm.kri::CalculateRiskScore",
+          "output": "Analysis_Summary",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    },
+    "Reporting_Bounds": {
+      "workflow_id": "Bounds",
+      "workflow_type": "Reporting",
+      "phase": "3_reporting",
+      "status": "completed",
+      "steps": [
+        {
+          "name": "gsm.reporting::MakeBounds",
+          "output": "Reporting_Bounds",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    },
+    "Reporting_Groups": {
+      "workflow_id": "Groups",
+      "workflow_type": "Reporting",
+      "phase": "3_reporting",
+      "status": "completed",
+      "steps": [
+        {
+          "name": "dplyr::bind_rows",
+          "output": "Reporting_Groups",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    },
+    "Reporting_Metrics": {
+      "workflow_id": "Metrics",
+      "workflow_type": "Reporting",
+      "phase": "3_reporting",
+      "status": "completed",
+      "steps": [
+        {
+          "name": "gsm.reporting::MakeMetric",
+          "output": "Reporting_Metrics",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    },
+    "Reporting_Results": {
+      "workflow_id": "Results",
+      "workflow_type": "Reporting",
+      "phase": "3_reporting",
+      "status": "completed",
+      "steps": [
+        {
+          "name": "gsm.kri::FilterByLatestSnapshotDate",
+          "output": "Reporting_Results",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    },
+    "Report_ae_explorer": {
+      "workflow_id": "ae_explorer",
+      "workflow_type": "Report",
+      "phase": "3_reports",
+      "status": "completed",
+      "steps": []
+    },
+    "Report_ae_timelines": {
+      "workflow_id": "ae_timelines",
+      "workflow_type": "Report",
+      "phase": "3_reports",
+      "status": "completed",
+      "steps": []
+    },
+    "Report_hep_explorer": {
+      "workflow_id": "hep_explorer",
+      "workflow_type": "Report",
+      "phase": "3_reports",
+      "status": "completed",
+      "steps": []
+    },
+    "Report_qt_explorer": {
+      "workflow_id": "qt_explorer",
+      "workflow_type": "Report",
+      "phase": "3_reports",
+      "status": "completed",
+      "steps": []
+    },
+    "Report_safety_delta_delta": {
+      "workflow_id": "safety_delta_delta",
+      "workflow_type": "Report",
+      "phase": "3_reports",
+      "status": "completed",
+      "steps": []
+    },
+    "Report_safety_histogram": {
+      "workflow_id": "safety_histogram",
+      "workflow_type": "Report",
+      "phase": "3_reports",
+      "status": "completed",
+      "steps": []
+    },
+    "Report_safety_outlier_explorer": {
+      "workflow_id": "safety_outlier_explorer",
+      "workflow_type": "Report",
+      "phase": "3_reports",
+      "status": "completed",
+      "steps": []
+    },
+    "Report_safety_results_over_time": {
+      "workflow_id": "safety_results_over_time",
+      "workflow_type": "Report",
+      "phase": "3_reports",
+      "status": "completed",
+      "steps": []
+    },
+    "Report_safety_shift_plot": {
+      "workflow_id": "safety_shift_plot",
+      "workflow_type": "Report",
+      "phase": "3_reports",
+      "status": "completed",
+      "steps": []
+    },
+    "Report_report_kri_country": {
+      "workflow_id": "report_kri_country",
+      "workflow_type": "Report",
+      "phase": "4_modules",
+      "status": "completed",
+      "steps": [
+        {
+          "name": "html_report",
+          "output": "kri_report_AAAA0000000_Country_20260728",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    },
+    "Report_report_kri_site": {
+      "workflow_id": "report_kri_site",
+      "workflow_type": "Report",
+      "phase": "4_modules",
+      "status": "completed",
+      "steps": [
+        {
+          "name": "html_report",
+          "output": "kri_report_AAAA0000000_Site_20260728",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    }
+  }
+}
