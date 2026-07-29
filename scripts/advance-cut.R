@@ -17,7 +17,11 @@
 #     moves for the same sites;
 #   * about twenty-five new adverse events on existing participants;
 #   * five newly enrolled participants, with a baseline, the new visit, and a
-#     first adverse event each.
+#     first adverse event each;
+#   * movement in disposition and eligibility — participants who came off study
+#     or off study drug during the period, and eligibility findings raised at a
+#     monitoring visit, which is what makes the discontinuation KRIs and the
+#     study-level QTLs differ between the two snapshots.
 #
 # The script appends and never edits, so cut N+1 is a strict superset of cut N
 # and the diff on `main` stays readable. It refuses to run twice: it stops if
@@ -65,6 +69,9 @@ enroll <- read_raw("Raw_ENROLL.csv")
 ae <- read_raw("Raw_AE.csv")
 lb <- read_raw("Raw_LB.csv")
 eg <- read_raw("Raw_EG.csv")
+studcomp <- read_raw("Raw_STUDCOMP.csv")
+sdrgcomp <- read_raw("Raw_SDRGCOMP.csv")
+ie <- read_raw("Raw_IE.csv")
 
 if (VISIT_NAME %in% lb$visnam) {
   stop(
@@ -322,6 +329,94 @@ new_subject_ae$aeen_dt <- as.character(as.Date(cut_date) + 7)
 new_subject_ae$mincreated_dts <- cut_date
 
 # ---------------------------------------------------------------------------
+# Disposition and eligibility
+# ---------------------------------------------------------------------------
+#
+# A data cut moves disposition in two ways: the participants who enrolled since
+# the last cut arrive on study, and some of the participants who were on study
+# come off it. Without both, the discontinuation KRIs and the study-level QTLs
+# would be frozen between snapshots — the one thing a since-last-review frame
+# exists to show.
+#
+# The new withdrawals are drawn from the continuing participants, weighted so
+# they concentrate at the sites that were already flagging. A participant who
+# comes off study is off study drug too.
+
+NEW_STUDY_DISC <- 22L
+NEW_TREAT_ONLY_DISC <- 14L
+NEW_IE_FINDINGS <- 6L
+
+on_study <- studcomp$subjid[studcomp$compyn == "Y" & studcomp$subjid %in% continuing]
+# Sites already carrying withdrawals are likelier to carry more.
+site_disc <- table(studcomp$invid[studcomp$compyn == "N"])
+weight <- 1 + 2 * as.numeric(site_disc[subj$invid[match(on_study, subj$subjid)]])
+weight[is.na(weight)] <- 1
+
+newly_off_study <- sample(on_study, NEW_STUDY_DISC, prob = weight)
+studcomp$compyn[studcomp$subjid %in% newly_off_study] <- "N"
+studcomp$compreas[studcomp$subjid %in% newly_off_study] <- sample(
+  c("Withdrew Consent", "Lost to Follow-Up", "Adverse Event", "Physician Decision"),
+  NEW_STUDY_DISC, replace = TRUE, prob = c(0.28, 0.22, 0.36, 0.14)
+)
+
+still_on_drug <- setdiff(
+  sdrgcomp$subjid[sdrgcomp$sdrgyn == "Y" & sdrgcomp$subjid %in% continuing],
+  newly_off_study
+)
+newly_off_drug <- c(
+  newly_off_study,
+  sample(still_on_drug, NEW_TREAT_ONLY_DISC)
+)
+sdrgcomp$sdrgyn[sdrgcomp$subjid %in% newly_off_drug] <- "N"
+
+# Eligibility findings surface late too: a monitoring visit reads the source
+# documents and an inclusion criterion turns out not to have been met.
+ie_clean <- ie$subjid[ie$Source == "Neither" & ie$subjid %in% continuing]
+newly_ineligible <- sample(ie_clean, NEW_IE_FINDINGS)
+new_ie_rows <- match(newly_ineligible, ie$subjid)
+ie$Source[new_ie_rows] <- sample(
+  c("EDC I/E", "Protocol Deviation"), NEW_IE_FINDINGS, replace = TRUE
+)
+ie$ie_violation[new_ie_rows] <- "Y"
+ie$ietestcd_concat[new_ie_rows] <- sample(
+  c("INCL03", "INCL07", "EXCL02", "EXCL05", "EXCL09"),
+  NEW_IE_FINDINGS, replace = TRUE
+)
+ie$eligibility_criteria[new_ie_rows] <- c(
+  INCL03 = "Confirmed diagnosis at screening",
+  INCL07 = "Adequate organ function at baseline",
+  EXCL02 = "Clinically significant hepatic impairment",
+  EXCL05 = "Prohibited concomitant medication within 28 days",
+  EXCL09 = "QTcF > 450 ms at screening"
+)[ie$ietestcd_concat[new_ie_rows]]
+ie$dvdtm[new_ie_rows] <- cut_date
+
+# The newly enrolled participants: on study, on drug, no eligibility concern.
+new_studcomp <- data.frame(
+  studyid = new_subj$studyid, compyn = "Y", compreas = "",
+  mincreated_dts = cut_date, subjid = new_ids, invid = new_subj$invid,
+  stringsAsFactors = FALSE
+)[, names(studcomp)]
+new_sdrgcomp <- data.frame(
+  studyid = new_subj$studyid, subjid = new_ids, invid = new_subj$invid,
+  sdrgyn = "Y", phase = "Treatment", mincreated_dts = cut_date,
+  stringsAsFactors = FALSE
+)[, names(sdrgcomp)]
+new_ie <- data.frame(
+  studyid = new_subj$studyid, invid = new_subj$invid,
+  country = new_subj$country, subjid = new_ids,
+  subjectid = new_subj$subject_nsv, Source = "Neither", ie_violation = "N",
+  ietestcd_concat = "", eligibility_criteria = "", dvdtm = "",
+  mincreated_dts = cut_date,
+  stringsAsFactors = FALSE
+)[, names(ie)]
+
+message(sprintf(
+  "Disposition: %d newly off study, %d newly off drug, %d new eligibility findings.",
+  NEW_STUDY_DISC, length(newly_off_drug), NEW_IE_FINDINGS
+))
+
+# ---------------------------------------------------------------------------
 # Extend follow-up for the continuing participants
 # ---------------------------------------------------------------------------
 #
@@ -341,6 +436,9 @@ subj$timeontreatment[is_continuing] <- as.character(
 message("\nWriting input/:")
 write_raw(rbind(subj, new_subj), "Raw_SUBJ.csv")
 write_raw(rbind(enroll, new_enroll), "Raw_ENROLL.csv")
+write_raw(rbind(studcomp, new_studcomp), "Raw_STUDCOMP.csv")
+write_raw(rbind(sdrgcomp, new_sdrgcomp), "Raw_SDRGCOMP.csv")
+write_raw(rbind(ie, new_ie), "Raw_IE.csv")
 write_raw(rbind(ae, picked, new_subject_ae), "Raw_AE.csv")
 write_raw(rbind(lb, new_lb, new_lb_subjects), "Raw_LB.csv")
 write_raw(rbind(eg, new_eg, new_eg_subjects), "Raw_EG.csv")

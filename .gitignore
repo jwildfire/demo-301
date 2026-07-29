@@ -2,6 +2,10 @@
 # not on main. Delete it and re-run any time.
 output/
 
+# og_run() archives each run's Reporting_Results here so the next run can
+# compute change columns against it. Derived, like output/.
+history/
+
 # The app shell is copied in by og_init() from the installed open.gismo and is
 # regenerated on publish, so main does not carry a stale copy.
 index.html

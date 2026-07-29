@@ -19,13 +19,15 @@
 #   input/Raw_SITE.csv      150 sites          (from gsm.core::lSource)
 #   input/Raw_SUBJ.csv    1,000 participants   (lSource + treatment arm)
 #   input/Raw_ENROLL.csv  1,000 enrollment records
-#   input/Raw_STUDCOMP.csv  100 completion records
+#   input/Raw_STUDCOMP.csv  765 study-completion records
+#   input/Raw_SDRGCOMP.csv  765 study-drug completion records
+#   input/Raw_IE.csv        765 eligibility records
 #   input/Raw_AE.csv      ~2,900 adverse events   (synthesized on this cohort)
 #   input/Raw_LB.csv     ~52,000 lab results      (synthesized on this cohort)
 #   input/Raw_EG.csv      ~6,600 ECG results      (synthesized on this cohort)
 #
 # The remaining `input/Raw_*.csv` domains — STUDY, PD, PK, QUERY, DATACHG,
-# DATAENT, SDRGCOMP — are the og_init() extract of `gsm.core::lSource` and are
+# DATAENT — are the og_init() extract of `gsm.core::lSource` and are
 # left exactly as they are. They key on `subjid` / `subject_nsv`, both of which
 # this script preserves, and none of them carries `invid`, so nothing in them
 # needs to move.
@@ -162,17 +164,169 @@ arm_risk <- c("Placebo" = 0.45, "Drug 40mg" = 1.00, "Drug 80mg" = 1.55)
 cohort$risk <- unname(site_risk[cohort$invid]) * unname(arm_risk[cohort$arm])
 
 # ---------------------------------------------------------------------------
-# 3. Enrollment and study completion
+# 3. Enrollment, disposition and eligibility
 # ---------------------------------------------------------------------------
+#
+# The source study carries 100 study-completion records for 1,000 participants
+# and no eligibility data at all. Both gaps are visible in the analysis:
+#
+#   * The two discontinuation KRIs (kri0006 Study Discontinuation, kri0007
+#     Treatment Discontinuation) are the joint-heaviest metrics in the site
+#     risk score at weight 32 each. With disposition recorded for a tenth of
+#     the cohort no site ever reaches their accrual threshold of 3, every row
+#     comes back with a null Flag, and `gsm.kri::CalculateRiskScore()` drops
+#     the whole metric in its weight join — so the published risk score is out
+#     of 114 rather than 178, and two of the three heaviest KRIs contribute
+#     nothing to it. Recording disposition for the whole cohort is what makes
+#     the score mean what it says.
+#   * The QTLs (`workflows/2_metrics/qtl*.yaml`, from gsm.qtl) are study-level
+#     acceptable ranges. qtl0002 reads the same disposition; qtl0001 reads an
+#     eligibility domain the study never extracted.
+#
+# Both are synthesized here on the same `risk` multiplier the AEs and labs use,
+# so a site that looks bad in the safety charts is the same site that looks bad
+# in the disposition metrics.
 
 raw_enroll <- lSource$Raw_ENROLL
 raw_enroll$invid <- HarmonizeInvid(raw_enroll$invid)
 
-raw_studcomp <- lSource$Raw_STUDCOMP
-raw_studcomp$invid <- HarmonizeInvid(raw_studcomp$invid)
-raw_studcomp <- raw_studcomp[, c(
-  "studyid", "compyn", "compreas", "mincreated_dts", "subjid", "invid"
-)]
+# --- Disposition -----------------------------------------------------------
+#
+# Two related events per participant, in the order they can happen: a
+# participant may come off study drug and stay on study for follow-up, but a
+# participant off study is off drug too. The rates are the ones a short Phase 2
+# would report — around a quarter off treatment, a sixth off study — and both
+# are scaled by site risk, so attrition and toxicity tell the same story.
+STUDY_DISC_RATE <- 0.155
+TREAT_DISC_RATE <- 0.245
+
+DiscontinuationReason <- function(n) {
+  sample(
+    c(
+      "Withdrew Consent", "Lost to Follow-Up", "Adverse Event",
+      "Physician Decision", "Protocol Deviation", "Death"
+    ),
+    n,
+    replace = TRUE,
+    prob = c(0.30, 0.24, 0.22, 0.12, 0.10, 0.02)
+  )
+}
+
+# `risk` is centred near 1, so clamping keeps a high-risk site's probability a
+# probability rather than letting the multiplier run past 1.
+disc_p <- pmin(0.85, cohort$risk * STUDY_DISC_RATE)
+study_disc <- stats::runif(n_cohort) < disc_p
+treat_p <- pmin(0.90, cohort$risk * TREAT_DISC_RATE)
+# Everyone off study is off treatment; the rest discontinue treatment at the
+# residual rate that leaves the marginal rate near TREAT_DISC_RATE.
+treat_disc <- study_disc | (stats::runif(n_cohort) < pmax(0, treat_p - disc_p))
+
+raw_studcomp <- data.frame(
+  studyid = cohort$studyid,
+  compyn = ifelse(study_disc, "N", "Y"),
+  compreas = ifelse(study_disc, DiscontinuationReason(n_cohort), ""),
+  mincreated_dts = as.character(cohort$mincreated_dts),
+  subjid = cohort$subjid,
+  invid = cohort$invid,
+  stringsAsFactors = FALSE
+)
+
+raw_sdrgcomp <- data.frame(
+  studyid = cohort$studyid,
+  subjid = cohort$subjid,
+  invid = cohort$invid,
+  sdrgyn = ifelse(treat_disc, "N", "Y"),
+  # `phase` is the treatment phase the participant was in; this study has one.
+  phase = "Treatment",
+  mincreated_dts = as.character(cohort$mincreated_dts),
+  stringsAsFactors = FALSE
+)
+
+message(sprintf(
+  "Disposition: %d of %d off study (%.1f%%), %d off treatment (%.1f%%); %d sites reach kri0006's accrual threshold of 3.",
+  sum(study_disc), n_cohort, 100 * mean(study_disc),
+  sum(treat_disc), 100 * mean(treat_disc),
+  sum(table(cohort$invid[study_disc]) >= 3)
+))
+
+# --- Eligibility (inclusion/exclusion) -------------------------------------
+#
+# One row per enrolled participant, which is what gsm.qtl's qtl0001 expects:
+# the denominator is every row, the numerator is every row whose `Source` is
+# not "Neither". `Source` names where the eligibility concern was found — the
+# EDC's own inclusion/exclusion form, a recorded protocol deviation, or both —
+# and the criteria columns carry what was violated, which is what the QTL
+# report's bar charts and listing break down.
+IE_CRITERIA <- data.frame(
+  code = c(
+    "INCL03", "INCL07", "INCL11", "EXCL02", "EXCL05", "EXCL09", "EXCL14"
+  ),
+  text = c(
+    "Confirmed diagnosis at screening",
+    "Adequate organ function at baseline",
+    "Written informed consent before any study procedure",
+    "Clinically significant hepatic impairment",
+    "Prohibited concomitant medication within 28 days",
+    "QTcF > 450 ms at screening",
+    "Participation in another interventional trial"
+  ),
+  stringsAsFactors = FALSE
+)
+
+IE_RATE <- 0.028 # qtl0001 compares against a historical rate of 3%
+ie_p <- pmin(0.5, cohort$risk * IE_RATE)
+ie_violation <- stats::runif(n_cohort) < ie_p
+n_ie <- sum(ie_violation)
+
+ie_source <- rep("Neither", n_cohort)
+ie_source[ie_violation] <- sample(
+  c("EDC I/E", "Protocol Deviation", "Both"),
+  n_ie, replace = TRUE, prob = c(0.55, 0.30, 0.15)
+)
+
+# One or two criteria per affected participant, joined with the ";;;" separator
+# gsm.qtl's listing splits on.
+ie_codes <- rep("", n_cohort)
+ie_terms <- rep("", n_cohort)
+ie_dates <- rep("", n_cohort)
+n_criteria <- sample(1:2, n_ie, replace = TRUE, prob = c(0.8, 0.2))
+picked_criteria <- lapply(n_criteria, function(k) {
+  sample(seq_len(nrow(IE_CRITERIA)), k)
+})
+ie_codes[ie_violation] <- vapply(
+  picked_criteria, function(i) paste(IE_CRITERIA$code[i], collapse = ","),
+  character(1)
+)
+ie_terms[ie_violation] <- vapply(
+  picked_criteria, function(i) paste(IE_CRITERIA$text[i], collapse = ";;;"),
+  character(1)
+)
+ie_first_dose <- as.character(as.Date(cohort$firstdosedate[ie_violation]))
+ie_dates[ie_violation] <- vapply(
+  seq_len(n_ie),
+  function(i) paste(rep(ie_first_dose[i], n_criteria[i]), collapse = ";;;"),
+  character(1)
+)
+
+raw_ie <- data.frame(
+  studyid = cohort$studyid,
+  invid = cohort$invid,
+  country = cohort$country,
+  subjid = cohort$subjid,
+  subjectid = cohort$subject_nsv,
+  Source = ie_source,
+  ie_violation = ifelse(ie_violation, "Y", "N"),
+  ietestcd_concat = ie_codes,
+  eligibility_criteria = ie_terms,
+  dvdtm = ie_dates,
+  mincreated_dts = as.character(cohort$mincreated_dts),
+  stringsAsFactors = FALSE
+)
+
+message(sprintf(
+  "Eligibility: %d of %d participants carry an I/E concern (%.1f%%; qtl0001's historical rate is %.1f%%).",
+  n_ie, n_cohort, 100 * n_ie / n_cohort, 100 * IE_RATE
+))
 
 # ---------------------------------------------------------------------------
 # 4. The visit schedule
@@ -606,6 +760,8 @@ write_input(raw_site, "Raw_SITE.csv")
 write_input(raw_subj, "Raw_SUBJ.csv")
 write_input(raw_enroll, "Raw_ENROLL.csv")
 write_input(raw_studcomp, "Raw_STUDCOMP.csv")
+write_input(raw_sdrgcomp, "Raw_SDRGCOMP.csv")
+write_input(raw_ie, "Raw_IE.csv")
 write_input(raw_ae, "Raw_AE.csv")
 write_input(raw_lb, "Raw_LB.csv")
 write_input(raw_eg, "Raw_EG.csv")

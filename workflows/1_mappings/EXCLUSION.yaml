@@ -1,0 +1,42 @@
+meta:
+  Type: Mapped
+  ID: EXCLUSION
+  Description: Inclusion/Exclusion (Eligibility) Data Mapping
+  Priority: 1
+spec:
+  Raw_IE:
+    studyid:
+      type: character
+    invid:
+      type: character
+    country:
+      type: character
+    subjid:
+      type: character
+    subjectid:
+      type: character
+    Source:
+      type: character
+    ie_violation:
+      type: character
+    ietestcd_concat:
+      type: character
+    eligibility_criteria:
+      type: character
+    dvdtm:
+      type: character
+steps:
+  # The source extract is the CDISC-shaped IE domain (`input/Raw_IE.csv`); the
+  # mapped domain is `Mapped_EXCLUSION`, because that is the name gsm.qtl's
+  # qtl0001 and its report both bind to. workr keys a workflow's result on
+  # `{Type}_{ID}`, so the workflow's own ID has to be EXCLUSION too — the file
+  # is named for the mapped domain, not the raw one.
+  #
+  # One row per enrolled participant: `Source == "Neither"` for the
+  # participants with no eligibility concern, which is the denominator
+  # qtl0001 divides by.
+  - output: Mapped_EXCLUSION
+    name: =
+    params:
+      lhs: Mapped_EXCLUSION
+      rhs: Raw_IE
