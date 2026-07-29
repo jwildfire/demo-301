@@ -1,18 +1,41 @@
 # report_qtl.yaml — gsm.qtl's QTL report module, as snapshotted by this study.
 #
-# Three edits against the copy in `gsm.qtl/inst/workflow/4_modules/`, all
-# recorded here rather than in a fork of the package:
+# Five edits against the copy in `gsm.qtl/inst/workflow/4_modules/`, recorded
+# here rather than in a fork of the package. Two are defects that produce a
+# wrong report, one is a portability defect, and two are hardening — the
+# difference is stated because only the first three are worth reporting
+# upstream as bugs.
 #
-#   1. `names:` -> `name:` on two steps. workr reads the step's function from
-#      `name`; `names` is silently ignored, so those steps ran `NULL`.
-#   2. `pull` -> `dplyr::pull`. Unqualified step names resolve through the
-#      search path, and open.gismo::og_run() attaches only the gsm packages a
-#      phase needs. Naming the namespace is what the rest of this project's
-#      workflows already do.
-#   3. The report's output directory is created before it is normalized;
-#      `normalizePath()` errors on a path that does not exist yet.
-#   4. `invid` added to the SUBJ/STUDCOMP join keys - see the step comment.
-#   5. The `!expr` reason-fill replaced with an equivalent query - see below.
+# Defects:
+#
+#   1. `invid` added to the SUBJ/STUDCOMP join keys. Both domains carry it -
+#      in `gsm.core::lSource` as well as here - so joining on studyid/subjid
+#      alone leaves `invid.x`/`invid.y` and the report's by-site charts error
+#      with "object 'invid' not found". This halts the render.
+#   2. The `!expr` reason-fill replaced with an equivalent query.
+#      `yaml::yaml.load()` evaluates `!expr` only when the caller passes
+#      `eval.expr = TRUE`, which workr does not, so the expression arrives as
+#      the literal string "rlang::expr(ifelse(...))" and is written to
+#      `compreas` for every row. The `WHERE compreas != 'Completed/Ongoing'`
+#      filter below it then matches everything, so the discontinuation listing
+#      silently shows the whole cohort. This one produces a wrong report
+#      rather than an error, which is the worse failure.
+#   3. `pull` -> `dplyr::pull`. An unqualified step name resolves through the
+#      search path, so the step only runs if the caller happened to attach
+#      dplyr; open.gismo::og_run() attaches just the gsm packages a phase
+#      needs, and the step fails with "Function 'pull' not found". Every other
+#      step in this file already names its namespace.
+#
+# Hardening (not defects - both of these work as shipped):
+#
+#   4. `names:` -> `name:` on two steps. These run correctly upstream: R's `$`
+#      partial matching resolves `lStep$name` to `names`. They are normalized
+#      because that is an accident, and it would break the day workr reads the
+#      field with `[[`.
+#   5. The output directory is created before it is normalized.
+#      `normalizePath()` defaults to `mustWork = NA`, so a missing path is a
+#      warning and the un-normalized path is passed on - not an error, but not
+#      a path the report should be trusting either.
 #
 meta:
   Type: Report

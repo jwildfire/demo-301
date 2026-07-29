@@ -151,6 +151,21 @@
       "png": "output/4_modules/static/qtl0002.png"
     },
     {
+      "metric": "saf0001",
+      "title": "Hy's Law Candidate (Subject)",
+      "png": "output/4_modules/static/saf0001.png"
+    },
+    {
+      "metric": "saf0002",
+      "title": "QTcF Prolongation (Subject)",
+      "png": "output/4_modules/static/saf0002.png"
+    },
+    {
+      "metric": "saf0003",
+      "title": "Serious / Related AE (Subject)",
+      "png": "output/4_modules/static/saf0003.png"
+    },
+    {
       "metric": "srs0001",
       "title": "Site Risk Score",
       "png": "output/4_modules/static/srs0001.png"

@@ -1175,6 +1175,120 @@
         }
       ]
     },
+    "Analysis_saf0001": {
+      "workflow_id": "saf0001",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "completed",
+      "steps": [
+        {
+          "name": "gsm.safety::Input_HysLaw",
+          "output": "Analysis_Input",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Transform_Rate",
+          "output": "Analysis_Transformed",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Analyze_Identity",
+          "output": "Analysis_Analyzed",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Flag",
+          "output": "Analysis_Flagged",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Summarize",
+          "output": "Analysis_Summary",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    },
+    "Analysis_saf0002": {
+      "workflow_id": "saf0002",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "completed",
+      "steps": [
+        {
+          "name": "gsm.safety::Input_QtProlongation",
+          "output": "Analysis_Input",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Transform_Rate",
+          "output": "Analysis_Transformed",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Analyze_Identity",
+          "output": "Analysis_Analyzed",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Flag",
+          "output": "Analysis_Flagged",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Summarize",
+          "output": "Analysis_Summary",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    },
+    "Analysis_saf0003": {
+      "workflow_id": "saf0003",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "completed",
+      "steps": [
+        {
+          "name": "gsm.safety::Input_SafetyAE",
+          "output": "Analysis_Input",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Transform_Rate",
+          "output": "Analysis_Transformed",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Analyze_Identity",
+          "output": "Analysis_Analyzed",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Flag",
+          "output": "Analysis_Flagged",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Summarize",
+          "output": "Analysis_Summary",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    },
     "Analysis_srs0001": {
       "workflow_id": "srs0001",
       "workflow_type": "Analysis",
@@ -1248,65 +1362,58 @@
     "Report_ae_explorer": {
       "workflow_id": "ae_explorer",
       "workflow_type": "Report",
-      "phase": "3_reports",
+      "phase": "4_modules",
       "status": "completed",
-      "steps": []
+      "steps": [
+        {
+          "name": "html_report",
+          "output": "ae_explorer",
+          "status": "completed",
+          "error": null
+        }
+      ]
     },
     "Report_ae_timelines": {
       "workflow_id": "ae_timelines",
       "workflow_type": "Report",
-      "phase": "3_reports",
+      "phase": "4_modules",
       "status": "completed",
-      "steps": []
+      "steps": [
+        {
+          "name": "html_report",
+          "output": "ae_timelines",
+          "status": "completed",
+          "error": null
+        }
+      ]
     },
     "Report_hep_explorer": {
       "workflow_id": "hep_explorer",
       "workflow_type": "Report",
-      "phase": "3_reports",
+      "phase": "4_modules",
       "status": "completed",
-      "steps": []
+      "steps": [
+        {
+          "name": "html_report",
+          "output": "hep_explorer",
+          "status": "completed",
+          "error": null
+        }
+      ]
     },
     "Report_qt_explorer": {
       "workflow_id": "qt_explorer",
       "workflow_type": "Report",
-      "phase": "3_reports",
+      "phase": "4_modules",
       "status": "completed",
-      "steps": []
-    },
-    "Report_safety_delta_delta": {
-      "workflow_id": "safety_delta_delta",
-      "workflow_type": "Report",
-      "phase": "3_reports",
-      "status": "completed",
-      "steps": []
-    },
-    "Report_safety_histogram": {
-      "workflow_id": "safety_histogram",
-      "workflow_type": "Report",
-      "phase": "3_reports",
-      "status": "completed",
-      "steps": []
-    },
-    "Report_safety_outlier_explorer": {
-      "workflow_id": "safety_outlier_explorer",
-      "workflow_type": "Report",
-      "phase": "3_reports",
-      "status": "completed",
-      "steps": []
-    },
-    "Report_safety_results_over_time": {
-      "workflow_id": "safety_results_over_time",
-      "workflow_type": "Report",
-      "phase": "3_reports",
-      "status": "completed",
-      "steps": []
-    },
-    "Report_safety_shift_plot": {
-      "workflow_id": "safety_shift_plot",
-      "workflow_type": "Report",
-      "phase": "3_reports",
-      "status": "completed",
-      "steps": []
+      "steps": [
+        {
+          "name": "html_report",
+          "output": "qt_explorer",
+          "status": "completed",
+          "error": null
+        }
+      ]
     },
     "Report_report_kri_country": {
       "workflow_id": "report_kri_country",
@@ -1345,6 +1452,76 @@
         {
           "name": "html_report",
           "output": "report_qtl",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    },
+    "Report_safety_delta_delta": {
+      "workflow_id": "safety_delta_delta",
+      "workflow_type": "Report",
+      "phase": "4_modules",
+      "status": "completed",
+      "steps": [
+        {
+          "name": "html_report",
+          "output": "safety_delta_delta",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    },
+    "Report_safety_histogram": {
+      "workflow_id": "safety_histogram",
+      "workflow_type": "Report",
+      "phase": "4_modules",
+      "status": "completed",
+      "steps": [
+        {
+          "name": "html_report",
+          "output": "safety_histogram",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    },
+    "Report_safety_outlier_explorer": {
+      "workflow_id": "safety_outlier_explorer",
+      "workflow_type": "Report",
+      "phase": "4_modules",
+      "status": "completed",
+      "steps": [
+        {
+          "name": "html_report",
+          "output": "safety_outlier_explorer",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    },
+    "Report_safety_results_over_time": {
+      "workflow_id": "safety_results_over_time",
+      "workflow_type": "Report",
+      "phase": "4_modules",
+      "status": "completed",
+      "steps": [
+        {
+          "name": "html_report",
+          "output": "safety_results_over_time",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    },
+    "Report_safety_shift_plot": {
+      "workflow_id": "safety_shift_plot",
+      "workflow_type": "Report",
+      "phase": "4_modules",
+      "status": "completed",
+      "steps": [
+        {
+          "name": "html_report",
+          "output": "safety_shift_plot",
           "status": "completed",
           "error": null
         }

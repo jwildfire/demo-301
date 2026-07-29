@@ -1,0 +1,186 @@
+{
+  "Census": [
+    {
+      "Label": "Enrolled participants",
+      "Value": 760,
+      "Denominator": null,
+      "Group": "Census"
+    },
+    {
+      "Label": "Randomised to an arm",
+      "Value": 760,
+      "Denominator": 760,
+      "Group": "Census"
+    },
+    {
+      "Label": "Received study drug",
+      "Value": 732,
+      "Denominator": 760,
+      "Group": "Census"
+    },
+    {
+      "Label": "Deaths",
+      "Value": 5,
+      "Denominator": 760,
+      "Group": "Census"
+    },
+    {
+      "Label": "Person-years on study",
+      "Value": 71.8,
+      "Denominator": null,
+      "Group": "Exposure"
+    },
+    {
+      "Label": "Person-years on treatment",
+      "Value": 27.5,
+      "Denominator": null,
+      "Group": "Exposure"
+    },
+    {
+      "Label": "Median days on treatment",
+      "Value": 13,
+      "Denominator": null,
+      "Group": "Exposure"
+    },
+    {
+      "Label": "Participants with a lab result",
+      "Value": 760,
+      "Denominator": 760,
+      "Group": "Follow-up"
+    },
+    {
+      "Label": "Participants with an ECG",
+      "Value": 760,
+      "Denominator": 760,
+      "Group": "Follow-up"
+    },
+    {
+      "Label": "Participants with a reported AE",
+      "Value": 611,
+      "Denominator": 760,
+      "Group": "Follow-up"
+    },
+    {
+      "Label": "Participants with a disposition record",
+      "Value": 760,
+      "Denominator": 760,
+      "Group": "Follow-up"
+    }
+  ],
+  "Coverage": [
+    {
+      "Domain": "Labs",
+      "Visit": "Baseline",
+      "VisitNum": 1,
+      "Participants": 760,
+      "Expected": 760
+    },
+    {
+      "Domain": "Labs",
+      "Visit": "Week 1",
+      "VisitNum": 2,
+      "Participants": 646,
+      "Expected": 760
+    },
+    {
+      "Domain": "Labs",
+      "Visit": "Week 2",
+      "VisitNum": 3,
+      "Participants": 560,
+      "Expected": 760
+    },
+    {
+      "Domain": "Labs",
+      "Visit": "Week 3",
+      "VisitNum": 4,
+      "Participants": 479,
+      "Expected": 760
+    },
+    {
+      "Domain": "Labs",
+      "Visit": "Week 4",
+      "VisitNum": 5,
+      "Participants": 395,
+      "Expected": 760
+    },
+    {
+      "Domain": "Labs",
+      "Visit": "Week 6",
+      "VisitNum": 6,
+      "Participants": 264,
+      "Expected": 760
+    },
+    {
+      "Domain": "Labs",
+      "Visit": "Week 8",
+      "VisitNum": 7,
+      "Participants": 158,
+      "Expected": 760
+    },
+    {
+      "Domain": "Labs",
+      "Visit": "Week 12",
+      "VisitNum": 8,
+      "Participants": 17,
+      "Expected": 760
+    },
+    {
+      "Domain": "ECG",
+      "Visit": "Baseline",
+      "VisitNum": 1,
+      "Participants": 760,
+      "Expected": 760
+    },
+    {
+      "Domain": "ECG",
+      "Visit": "Week 4",
+      "VisitNum": 2,
+      "Participants": 395,
+      "Expected": 760
+    },
+    {
+      "Domain": "ECG",
+      "Visit": "Week 8",
+      "VisitNum": 3,
+      "Participants": 158,
+      "Expected": 760
+    },
+    {
+      "Domain": "ECG",
+      "Visit": "Week 12",
+      "VisitNum": 4,
+      "Participants": 17,
+      "Expected": 760
+    }
+  ],
+  "Disposition": [
+    {
+      "State": "Completed",
+      "Participants": 638
+    },
+    {
+      "State": "Discontinued - Withdrew Consent",
+      "Participants": 39
+    },
+    {
+      "State": "Discontinued - Adverse Event",
+      "Participants": 28
+    },
+    {
+      "State": "Discontinued - Lost To Follow-up",
+      "Participants": 26
+    },
+    {
+      "State": "Discontinued - Physician Decision",
+      "Participants": 16
+    },
+    {
+      "State": "Discontinued - Protocol Deviation",
+      "Participants": 8
+    },
+    {
+      "State": "Died",
+      "Participants": 5
+    }
+  ]
+}

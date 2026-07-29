@@ -1,0 +1,95 @@
+meta:
+  Type: Analysis
+  ID: saf0002
+  GroupLevel: Subject
+  Abbreviation: QTCF
+  Metric: QTcF Prolongation (Subject)
+  Numerator: ICH E14 Outlier Tier
+  Denominator: Assessed Participant
+  Model: Identity
+  Score: Numerator
+  AnalysisType: identity
+  # Score is the ICH E14 outlier tier: 0 none, 1 >=450 ms or change >=30 ms,
+  # 2 >=480 ms, 3 >=500 ms or change >=60 ms. Tiers 1-2 are amber, tier 3 red.
+  Threshold: "1,3"
+  Flag: "0,1,2"
+  RiskScoreWeight: "0,4,16"
+  GenerateRiskSignal: false
+  # Cut-points in ms from the qt-explorer data contract
+  # (inst/schema/qt-explorer.json): absolute_thresholds [450, 480, 500] and
+  # change_thresholds [30, 60], the ICH E14 categorical analysis cuts.
+  AbsoluteThresholds: "450,480,500"
+  ChangeThresholds: "30,60"
+  Measure: QTcF
+spec:
+  Mapped_EG:
+    subjid:
+      type: character
+    egtstnam:
+      type: character
+    egstresn:
+      type: numeric
+    egbase:
+      type: numeric
+    egchg:
+      type: numeric
+steps:
+  - output: vThreshold
+    name: gsm.core::ParseThreshold
+    params:
+      strThreshold: Threshold
+  - output: vFlag
+    name: gsm.core::ParseThreshold
+    params:
+      strThreshold: Flag
+      bSort: false
+  - output: vRiskScoreWeight
+    name: gsm.core::ParseThreshold
+    params:
+      strThreshold: RiskScoreWeight
+      bSort: false
+  - output: vAbsoluteThresholds
+    name: gsm.core::ParseThreshold
+    params:
+      strThreshold: AbsoluteThresholds
+  - output: vChangeThresholds
+    name: gsm.core::ParseThreshold
+    params:
+      strThreshold: ChangeThresholds
+  - output: Analysis_Input
+    name: gsm.safety::Input_QtProlongation
+    params:
+      dfECG: Mapped_EG
+      strMeasure: Measure
+      vAbsoluteThresholds: vAbsoluteThresholds
+      vChangeThresholds: vChangeThresholds
+      strGroupLevel: GroupLevel
+  - output: Analysis_Transformed
+    name: gsm.core::Transform_Rate
+    params:
+      dfInput: Analysis_Input
+  - output: Analysis_Analyzed
+    name: gsm.core::Analyze_Identity
+    params:
+      dfTransformed: Analysis_Transformed
+      strValueCol: Score
+  - output: Analysis_Flagged
+    name: gsm.core::Flag
+    params:
+      dfAnalyzed: Analysis_Analyzed
+      vThreshold: vThreshold
+      vFlag: vFlag
+      vRiskScoreWeight: vRiskScoreWeight
+  - output: Analysis_Summary
+    name: gsm.core::Summarize
+    params:
+      dfFlagged: Analysis_Flagged
+  - output: lAnalysis
+    name: list
+    params:
+      ID: ID
+      Analysis_Input: Analysis_Input
+      Analysis_Transformed: Analysis_Transformed
+      Analysis_Analyzed: Analysis_Analyzed
+      Analysis_Flagged: Analysis_Flagged
+      Analysis_Summary: Analysis_Summary
