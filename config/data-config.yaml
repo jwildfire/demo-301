@@ -11,6 +11,7 @@ Raw_DATACHG: input/Raw_DATACHG.csv
 Raw_DATAENT: input/Raw_DATAENT.csv
 Raw_EG: input/Raw_EG.csv
 Raw_ENROLL: input/Raw_ENROLL.csv
+Raw_IE: input/Raw_IE.csv
 Raw_LB: input/Raw_LB.csv
 Raw_PD: input/Raw_PD.csv
 Raw_QUERY: input/Raw_QUERY.csv

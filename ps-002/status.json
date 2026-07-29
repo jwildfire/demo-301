@@ -85,6 +85,20 @@
         }
       ]
     },
+    "Mapped_EXCLUSION": {
+      "workflow_id": "EXCLUSION",
+      "workflow_type": "Mapped",
+      "phase": "1_mappings",
+      "status": "completed",
+      "steps": [
+        {
+          "name": "=",
+          "output": "Mapped_EXCLUSION",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    },
     "Mapped_LB": {
       "workflow_id": "LB",
       "workflow_type": "Mapped",
@@ -1109,6 +1123,58 @@
         }
       ]
     },
+    "Analysis_qtl0001": {
+      "workflow_id": "qtl0001",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "completed",
+      "steps": [
+        {
+          "name": "gsm.core::Input_Rate",
+          "output": "Analysis_Input",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Transform_Rate",
+          "output": "Analysis_Transformed",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.qtl::Analyze_OneSideProp",
+          "output": "Analysis_Summary",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    },
+    "Analysis_qtl0002": {
+      "workflow_id": "qtl0002",
+      "workflow_type": "Analysis",
+      "phase": "2_metrics",
+      "status": "completed",
+      "steps": [
+        {
+          "name": "gsm.core::Input_Rate",
+          "output": "Analysis_Input",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.core::Transform_Rate",
+          "output": "Analysis_Transformed",
+          "status": "completed",
+          "error": null
+        },
+        {
+          "name": "gsm.qtl::Analyze_OneSideProp",
+          "output": "Analysis_Summary",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    },
     "Analysis_srs0001": {
       "workflow_id": "srs0001",
       "workflow_type": "Analysis",
@@ -1250,7 +1316,7 @@
       "steps": [
         {
           "name": "html_report",
-          "output": "kri_report_AAAA0000000_Country_20260728",
+          "output": "kri_report_AAAA0000000_Country_20120524",
           "status": "completed",
           "error": null
         }
@@ -1264,7 +1330,21 @@
       "steps": [
         {
           "name": "html_report",
-          "output": "kri_report_AAAA0000000_Site_20260728",
+          "output": "kri_report_AAAA0000000_Site_20120524",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    },
+    "Report_report_qtl": {
+      "workflow_id": "report_qtl",
+      "workflow_type": "Report",
+      "phase": "4_modules",
+      "status": "completed",
+      "steps": [
+        {
+          "name": "html_report",
+          "output": "report_qtl",
           "status": "completed",
           "error": null
         }

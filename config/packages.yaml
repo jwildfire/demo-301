@@ -6,6 +6,8 @@ packages:
   - Gilead-BioStats/gsm.mapping
   - Gilead-BioStats/gsm.kri
   - Gilead-BioStats/gsm.reporting
+  # Study-level quality tolerance limits (workflows/2_metrics/qtl*.yaml).
+  - Gilead-BioStats/gsm.qtl
   - Gilead-BioStats/workr
   # Safety-domain chart workflows (workflows/3_reports/).
   - jwildfire/gsm.safety

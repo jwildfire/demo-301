@@ -1,16 +1,22 @@
 {
   "reports": [
     {
+      "id": "report_kri_country",
+      "title": "Country-Level Key Risk Indicator Report",
+      "html": "output/4_modules/report_kri_country/kri_report_AAAA0000000_Country_20120524.html",
+      "group_level": "Country"
+    },
+    {
       "id": "report_kri_site",
       "title": "Site-Level Key Risk Indicator Report",
-      "html": "output/4_modules/report_kri_site/kri_report_AAAA0000000_Site_20260728.html",
+      "html": "output/4_modules/report_kri_site/kri_report_AAAA0000000_Site_20120524.html",
       "group_level": "Site"
     },
     {
-      "id": "report_kri_country",
-      "title": "Country-Level Key Risk Indicator Report",
-      "html": "output/4_modules/report_kri_country/kri_report_AAAA0000000_Country_20260728.html",
-      "group_level": "Country"
+      "id": "report_qtl",
+      "title": "QTL Report",
+      "html": "output/4_modules/report_qtl/report_qtl.html",
+      "group_level": "Study"
     }
   ],
   "static_charts": [
@@ -133,6 +139,16 @@
       "metric": "kri0012",
       "title": "Screen Failure Rate",
       "png": "output/4_modules/static/kri0012.png"
+    },
+    {
+      "metric": "qtl0001",
+      "title": "Inclusion/Exclusion Violation Rate",
+      "png": "output/4_modules/static/qtl0001.png"
+    },
+    {
+      "metric": "qtl0002",
+      "title": "Study Discontinuation Rate",
+      "png": "output/4_modules/static/qtl0002.png"
     },
     {
       "metric": "srs0001",
