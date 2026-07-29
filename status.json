@@ -8,7 +8,7 @@
       "status": "completed",
       "steps": [
         {
-          "name": "=",
+          "name": "dplyr::inner_join",
           "output": "Mapped_AE",
           "status": "completed",
           "error": null
@@ -57,6 +57,20 @@
         }
       ]
     },
+    "Mapped_EG": {
+      "workflow_id": "EG",
+      "workflow_type": "Mapped",
+      "phase": "1_mappings",
+      "status": "completed",
+      "steps": [
+        {
+          "name": "gsm.core::RunQuery",
+          "output": "Mapped_EG",
+          "status": "completed",
+          "error": null
+        }
+      ]
+    },
     "Mapped_ENROLL": {
       "workflow_id": "ENROLL",
       "workflow_type": "Mapped",
@@ -78,7 +92,7 @@
       "status": "completed",
       "steps": [
         {
-          "name": "=",
+          "name": "dplyr::inner_join",
           "output": "Mapped_LB",
           "status": "completed",
           "error": null

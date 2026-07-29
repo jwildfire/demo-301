@@ -2,31 +2,45 @@ meta:
   Type: Report
   ID: ae_explorer
   Output: html
-  Data: adae
+  Data: Mapped_AE
   Name: Adverse Event Explorer Report
-  Description: Interactive safety.viz adverse event explorer with per-arm prevalence, between-arm differences, and participant drill-down.
+  Description: Interactive safety.viz adverse event explorer with per-arm prevalence, between-arm differences, and participant drill-down. Reads the same Mapped_AE rows the Adverse Event Rate KRI counts.
   lSettings:
+    id_col: subjid
+    major_col: mdrsoc_nsv
+    minor_col: mdrpt_nsv
+    group_col: arm
     filters:
-      - value_col: AESEV
+      - value_col: aesev
         label: Severity
-      - value_col: AESER
+      - value_col: aeser
         label: Serious
+      - value_col: aerel
+        label: Related
     details:
-      - value_col: AETERM
+      - value_col: aeterm
         label: Reported Term
-      - value_col: AESEV
+      - value_col: aesev
         label: Severity
-      - value_col: ASTDY
+      - value_col: aest_dy
         label: Start Day
 spec:
   dfResults:
-    USUBJID:
+    subjid:
       type: character
-    AEBODSYS:
+    mdrsoc_nsv:
       type: character
-    AEDECOD:
+    mdrpt_nsv:
       type: character
-    ARM:
+    aeterm:
+      type: character
+    aesev:
+      type: character
+    aeser:
+      type: character
+    aest_dy:
+      type: integer
+    arm:
       type: character
 steps:
   - output: strOutputDir

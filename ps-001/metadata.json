@@ -1,7 +1,7 @@
 {
   "snapshot_id": "ps-001",
-  "created_at": "2026-07-28T18:31:14Z",
+  "created_at": "2026-07-29T01:37:57Z",
   "input_data_version": "cut-1",
-  "package_snapshot": "local-2026-07-28",
+  "package_snapshot": "local",
   "previous_snapshots": []
 }

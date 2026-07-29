@@ -1,0 +1,83 @@
+# ECG results, mapped once.
+#
+# New domain. The QT explorer is the one Safety chart with no RBQM counterpart
+# in this study, and it needs something the other domains do not: a
+# change-from-baseline per participant per parameter, so the central-tendency
+# view can compare each active arm against placebo. That derivation belongs
+# here, in the mapping, not in the chart — `Mapped_EG` carries `egbase` and
+# `egchg` alongside the result, and anything else that wants change from
+# baseline gets the same numbers.
+#
+# The participant join is an INNER join on purpose — see the note in AE.yaml.
+meta:
+  Type: Mapped
+  ID: EG
+  Description: ECG Data Mapping
+  Priority: 2
+spec:
+  Raw_EG:
+    studyid:
+      type: character
+    subjid:
+      type: character
+    visnam:
+      type: character
+    visnum:
+      type: integer
+    eg_dy:
+      type: integer
+    eg_dt:
+      type: Date
+    egblfl:
+      type: character
+    egtstnam:
+      type: character
+    egstresn:
+      type: numeric
+    egstresu:
+      type: character
+  Mapped_SUBJ:
+    subjid:
+      type: character
+    invid:
+      type: character
+    country:
+      type: character
+    arm:
+      type: character
+    sex:
+      type: character
+    race:
+      type: character
+    agerep:
+      type: integer
+steps:
+  - output: Temp_EG_Participant
+    name: gsm.core::RunQuery
+    params:
+      df: Mapped_SUBJ
+      strQuery: "SELECT subjid, invid, country, arm, sex, race, agerep FROM df"
+  - output: Temp_EG_Joined
+    name: dplyr::inner_join
+    params:
+      x: Raw_EG
+      "y": Temp_EG_Participant
+      by: subjid
+  - output: Temp_EG_Baseline
+    name: gsm.core::RunQuery
+    params:
+      df: Temp_EG_Joined
+      strQuery: "SELECT subjid, egtstnam, egstresn AS egbase FROM df WHERE egblfl = 'Y'"
+  - output: Temp_EG_WithBaseline
+    name: dplyr::left_join
+    params:
+      x: Temp_EG_Joined
+      "y": Temp_EG_Baseline
+      by:
+        - subjid
+        - egtstnam
+  - output: Mapped_EG
+    name: gsm.core::RunQuery
+    params:
+      df: Temp_EG_WithBaseline
+      strQuery: "SELECT *, egstresn - egbase AS egchg FROM df"

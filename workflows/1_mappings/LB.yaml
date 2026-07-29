@@ -1,21 +1,80 @@
+# Laboratory results, mapped once for both lenses on this study.
+#
+# `Raw_LB` carries a numeric result, its units, and the reference range it was
+# measured against, plus the CTCAE toxicity grade *derived from* that result.
+# The Grade 3+ Lab Abnormality KRI (kri0005/cou0005) counts the grade; six of
+# the nine Safety charts plot the result. Because the grade comes from the
+# result, the two cannot tell different stories about the same participant.
+#
+# The participant join is an INNER join on purpose — see the note in AE.yaml.
+#
+# `toxgrg_nsv` is cast back to text because the grades are written as "0".."4"
+# and base R's `read.csv()` type-converts an all-numeric column to integer,
+# which would leave the KRI's `WHERE toxgrg_nsv IN ('3', '4')` matching nothing.
 meta:
   Type: Mapped
   ID: LB
   Description: Lab Data Mapping
-  Priority: 1
+  Priority: 2
 spec:
   Raw_LB:
     studyid:
       type: character
     subjid:
       type: character
-    toxgrg_nsv:
+    visnam:
       type: character
+    visnum:
+      type: integer
+    lb_dy:
+      type: integer
     lb_dt:
       type: Date
+    lbblfl:
+      type: character
+    battrnam:
+      type: character
+    lbtstnam:
+      type: character
+    lbstresn:
+      type: numeric
+    lbstresu:
+      type: character
+    lbstnrlo:
+      type: numeric
+    lbstnrhi:
+      type: numeric
+    toxgrg_nsv:
+      type: character
+  Mapped_SUBJ:
+    subjid:
+      type: character
+    invid:
+      type: character
+    country:
+      type: character
+    arm:
+      type: character
+    sex:
+      type: character
+    race:
+      type: character
+    agerep:
+      type: integer
 steps:
-  - output: Mapped_LB
-    name: =
+  - output: Temp_LB_Typed
+    name: gsm.core::RunQuery
     params:
-      lhs: Mapped_LB
-      rhs: Raw_LB
+      df: Raw_LB
+      strQuery: "SELECT studyid, subjid, visnam, visnum, lb_dy, lb_dt, lbblfl, battrnam, lbtstnam, lbstresn, lbstresu, lbstnrlo, lbstnrhi, CAST(toxgrg_nsv AS VARCHAR) AS toxgrg_nsv FROM df"
+  - output: Temp_LB_Participant
+    name: gsm.core::RunQuery
+    params:
+      df: Mapped_SUBJ
+      strQuery: "SELECT subjid, invid, country, arm, sex, race, agerep FROM df"
+  - output: Mapped_LB
+    name: dplyr::inner_join
+    params:
+      x: Temp_LB_Typed
+      "y": Temp_LB_Participant
+      by: subjid
