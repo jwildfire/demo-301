@@ -2,38 +2,63 @@ meta:
   Type: Report
   ID: hep_explorer
   Output: html
-  Data: adbds
+  Data: Mapped_LB
   Name: Hepatic Safety Explorer Report
-  Description: Interactive safety.viz eDISH hepatic safety explorer with Hy's Law quadrants and participant drill-down.
+  Description: Interactive safety.viz eDISH hepatic safety explorer with Hy's Law quadrants and participant drill-down, over the study's own liver chemistry.
   lSettings:
-    studyday_col: VISITNUM
-    visit_col: VISIT
-    visitn_col: VISITNUM
+    id_col: subjid
+    measure_col: lbtstnam
+    value_col: lbstresn
+    unit_col: lbstresu
+    normal_col_high: lbstnrhi
+    normal_col_low: lbstnrlo
+    studyday_col: lb_dy
+    visit_col: visnam
+    visitn_col: visnum
     measure_values:
       ALT: Alanine Aminotransferase
       AST: Aspartate Aminotransferase
       TB: Bilirubin
       ALP: Alkaline Phosphatase
     filters:
-      - value_col: SEX
+      - value_col: sex
         label: Sex
-      - value_col: ARM
+      - value_col: arm
         label: Treatment Group
+      - value_col: invid
+        label: Site
     groups:
-      - value_col: ARM
+      - value_col: arm
         label: Treatment Group
-      - value_col: SEX
+      - value_col: sex
         label: Sex
+    details:
+      - value_col: subjid
+        label: Participant ID
+      - value_col: arm
+        label: Treatment Group
+      - value_col: invid
+        label: Site
 spec:
   dfResults:
-    USUBJID:
+    subjid:
       type: character
-    TEST:
+    lbtstnam:
       type: character
-    STRESN:
+    lbstresn:
       type: numeric
-    STNRHI:
+    lbstnrhi:
       type: numeric
+    lbstnrlo:
+      type: numeric
+    lb_dy:
+      type: integer
+    visnum:
+      type: integer
+    arm:
+      type: character
+    invid:
+      type: character
 steps:
   - output: strOutputDir
     name: getwd

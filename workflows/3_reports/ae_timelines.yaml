@@ -2,40 +2,59 @@ meta:
   Type: Report
   ID: ae_timelines
   Output: html
-  Data: adae
+  Data: Mapped_AE
   Name: AE Timelines Report
-  Description: Interactive safety.viz adverse-event timelines, one row per participant.
+  Description: Interactive safety.viz adverse-event timelines, one row per participant, on the study days the events were recorded against.
   lSettings:
+    id_col: subjid
+    seq_col: aeseq
+    stdy_col: aest_dy
+    endy_col: aeen_dy
+    term_col: aeterm
     color:
-      value_col: AESEV
+      value_col: aesev
       label: Severity
     highlight:
-      value_col: AESER
+      value_col: aeser
       label: Serious Event
       value: Y
     filters:
-      - value_col: AESER
+      - value_col: aeser
         label: Serious Event
-      - value_col: AESEV
+      - value_col: aesev
         label: Severity
-      - value_col: ARM
+      - value_col: arm
         label: Treatment Group
-      - value_col: USUBJID
+      - value_col: invid
+        label: Site
+      - value_col: subjid
         label: Participant ID
     details:
-      - value_col: AEBODSYS
+      - value_col: mdrsoc_nsv
         label: Body System
-      - value_col: AEDECOD
+      - value_col: mdrpt_nsv
         label: Dictionary-Derived Term
     sort_participants: earliest
 spec:
   dfResults:
-    USUBJID:
+    subjid:
       type: character
-    AETERM:
+    aeseq:
+      type: integer
+    aeterm:
       type: character
-    ASTDY:
-      type: numeric
+    aesev:
+      type: character
+    aeser:
+      type: character
+    aest_dy:
+      type: integer
+    aeen_dy:
+      type: integer
+    arm:
+      type: character
+    invid:
+      type: character
 steps:
   - output: strOutputDir
     name: getwd

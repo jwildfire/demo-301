@@ -20,11 +20,15 @@ changes, and the `ps-NNN/` copy makes history addressable for the snapshot
 picker. Git stores the duplicate as one blob, so the branch does not pay for it
 twice.
 
-Large mapping artifacts are omitted from the published `output/1_mappings/` --
-every mapping workflow in this study is a literal `Mapped_X = Raw_X`
-assignment, so those CSVs are re-serializations of `input/`, which is versioned
-on `main`. Each snapshot records exactly what was left out in
-`output/1_mappings/OMITTED.json`.
+Very large mapping artifacts are omitted from the published
+`output/1_mappings/`. The threshold is set above `Mapped_LB` on purpose: the
+three domains the Safety charts read -- `Mapped_LB`, `Mapped_AE`, `Mapped_EG`
+-- are published, because "both lenses read these files" is the claim this
+demo makes and it should be checkable from the site. What gets dropped is the
+operational bulk (data changes, data entry, queries), which is tens of
+megabytes per snapshot and is reproducible by re-running the mapping phase
+over `input/`, versioned on `main`. Each snapshot records exactly what was
+left out in `output/1_mappings/OMITTED.json`.
 
 Usage:
     python3 scripts/publish-snapshot.py SITE_DIR INPUT_DATA_VERSION \\
@@ -48,7 +52,7 @@ SNAPSHOT_FILES = ["status.json", "manifest.csv"]
 SNAPSHOT_DIRS = ["output"]
 
 # Mapping artifacts larger than this are omitted from the published tree.
-MAPPING_SIZE_LIMIT = 5 * 1024 * 1024
+MAPPING_SIZE_LIMIT = 10 * 1024 * 1024
 
 
 def next_snapshot_id(index: dict) -> str:
@@ -77,8 +81,9 @@ def prune_mappings(output_dir: Path) -> list[dict]:
                 "path": str(path.relative_to(output_dir.parent)),
                 "bytes": size,
                 "reason": (
-                    "mapping output is a re-serialization of the input CSV of "
-                    "the same name; the input is versioned on main"
+                    "operational mapping output, omitted from the published "
+                    "tree for size; reproducible by re-running the mapping "
+                    "phase over input/, which is versioned on main"
                 ),
             }
         )

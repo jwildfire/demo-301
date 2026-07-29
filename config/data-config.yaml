@@ -9,6 +9,7 @@
 Raw_AE: input/Raw_AE.csv
 Raw_DATACHG: input/Raw_DATACHG.csv
 Raw_DATAENT: input/Raw_DATAENT.csv
+Raw_EG: input/Raw_EG.csv
 Raw_ENROLL: input/Raw_ENROLL.csv
 Raw_LB: input/Raw_LB.csv
 Raw_PD: input/Raw_PD.csv
@@ -19,11 +20,8 @@ Raw_STUDCOMP: input/Raw_STUDCOMP.csv
 Raw_STUDY: input/Raw_STUDY.csv
 Raw_SUBJ: input/Raw_SUBJ.csv
 
-# Safety domain inputs (workflows/3_reports). These are ADaM-shaped
-# (USUBJID / TEST / STRESN / ARM / VISIT), a different source family from the
-# Raw_* domains above — see scripts/make-safety-inputs.R for why, and the
-# "Two source families" section of the README. Each chart workflow names the
-# domain it reads in its own `meta.Data` key.
-adbds: input/adbds.csv
-adae: input/adae.csv
-adeg: input/adeg.csv
+# The Safety chart workflows in workflows/3_reports do not appear here. They
+# read *mapped* domains, not raw ones: each names `Mapped_LB`, `Mapped_AE` or
+# `Mapped_EG` in its own `meta.Data` key, and scripts/run-safety-reports.R
+# resolves those to the CSVs the mapping phase wrote under
+# output/1_mappings/. One raw layer, mapped once, read by both lenses.

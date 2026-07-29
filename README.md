@@ -6,9 +6,8 @@ needs — configuration, workflows, input data, and the environment record — l
 here as plain files. No database, no server, no build step.
 
 **The data in this repository is synthetic.** No real participant, site, or
-study data appears anywhere in this repo, and none ever should. It comes from
-two example datasets shipped with the analytics packages — see [Two source
-families](#two-source-families) below.
+study data appears anywhere in this repo, and none ever should. It is one study
+database, built by one script — see [One raw layer](#one-raw-layer) below.
 
 ## Fork it and it runs
 
@@ -50,31 +49,49 @@ and column is missing rather than failing deep inside a pipeline step.
 
 `scripts/run-pipeline.R` is the entry point rather than `og_run()` alone,
 because `og_run()` covers the four RBQM phases but not `workflows/3_reports/`.
-The script runs the safety charts first, then `og_run()`, so the payload files
-`og_run()` regenerates describe both domains.
+It runs `og_run()` first and the safety charts second: the charts read the
+`Mapped_*` domains the mapping phase writes, so mapping has to happen before
+they can be drawn.
 
-## Two source families
+## One raw layer
 
-The two domains need two different data shapes, so the study carries two
-synthetic source families. Both are example data shipped with the packages;
-neither describes a real study, and they describe *different* participant sets.
+Safety monitoring and RBQM monitoring run **in parallel over the same study
+data**. There is one set of `input/Raw_*.csv` files describing one cohort at one
+set of sites; `workflows/1_mappings/` maps it once; and both lenses read the
+result. A number one lens shows can be checked against the other.
 
-| Family | Files | Derived from | Columns |
+| Domain | Rows (cut 1) | Read by RBQM | Read by Safety |
 | --- | --- | --- | --- |
-| RBQM | `input/Raw_*.csv` | `gsm.core::lSource` | `studyid` / `subjid` / `invid` |
-| Safety | `input/adbds.csv`, `adae.csv`, `adeg.csv` | `gsm.safety::ExampleData()` | `USUBJID` / `TEST` / `STRESN` / `ARM` |
+| `Mapped_SUBJ` | 760 participants | every metric's denominator | joined into the three below |
+| `Mapped_AE` | 2,553 events | AE rate, serious AE rate (`kri0001`, `kri0002`) | AE explorer, AE timelines |
+| `Mapped_LB` | 52,464 results | Grade 3+ lab abnormality rate (`kri0005`) | histogram, outlier explorer, results over time, shift plot, delta-delta, eDISH |
+| `Mapped_EG` | 6,650 results | — | QT explorer |
 
-The `Raw_*` family cannot feed the safety charts: `Raw_LB` carries a toxicity
-grade but no numeric result, no reference range, and no baseline, and no `Raw_*`
-domain carries a treatment arm. Every workflow in `workflows/3_reports/` needs
-at least `USUBJID` + `TEST` + `STRESN`, and several need `ARM`, `BASE`, or
-`STNRHI`. Rather than invent those values, the safety domain uses gsm.safety's
-packaged ADaM example data and says so. `scripts/make-safety-inputs.R`
-regenerates those three CSVs from the pinned package.
+The joins that make this work live in the mapping workflows, not in either
+lane. `Mapped_LB`, `Mapped_AE` and `Mapped_EG` each carry the participant's
+site, treatment arm and demographics, attached by an **inner** join against
+`Mapped_SUBJ` — which is also the data cleaning step, since an event recorded
+against someone who never enrolled has no denominator to be a rate over and no
+arm to be compared in.
+
+Two consequences worth stating, because they are the point:
+
+- **The lab KRI and the lab charts cannot disagree.** `Raw_LB` carries a
+  numeric result, its units and the reference range it was measured against;
+  the CTCAE toxicity grade is *derived from* those. The KRI counts the grade,
+  the charts plot the result.
+- **Every AE the charts draw is an AE the KRI counted.** `Mapped_AE` has 2,553
+  rows; the AE explorer and AE timelines each render 2,553 rows; and the AE rate
+  KRI's numerator, summed across sites, is 2,553.
+
+`scripts/make-raw-data.R` builds the whole raw layer from a fixed seed and
+`gsm.core::lSource`, and documents what it synthesizes and why. The CSVs are
+committed: they are inputs, not derived data, and the script exists so they are
+reproducible, not so they are rebuilt on every run.
 
 Each chart workflow names the domain it reads in its own `meta.Data` key
-(`Data: adbds`), and that domain resolves to a file through
-`config/data-config.yaml` — the same indirection the mapping workflows use.
+(`Data: Mapped_LB`), and `scripts/run-safety-reports.R` resolves that to the
+CSV the mapping phase wrote under `output/1_mappings/`.
 
 ## Snapshots and data cuts
 
@@ -83,12 +100,15 @@ current snapshot, flat; `ps-NNN/` directories hold the history, indexed by
 `snapshots.json`. `scripts/publish-snapshot.py` writes both, and the branch's
 `PUBLISHING.md` documents the layout.
 
-`scripts/advance-cut.R` moves the study forward by one data cut, deterministically
-(fixed seed, append-only): a later visit for about a third of participants with a
-handful of unmistakable outliers, about twenty new adverse events, and five newly
-enrolled participants, applied to both source families. Two snapshots of the same
-code over two data cuts is the whole point of the snapshot model, and this script
-is how the second cut is reproducible rather than hand-made.
+`scripts/advance-cut.R` moves the study forward by one data cut,
+deterministically (fixed seed, append-only): a later visit for the participants
+still on study, a handful of unmistakable lab outliers, twenty-five new adverse
+events, five newly enrolled participants — and four more weeks of follow-up on
+the continuing participants, so the rate metrics see a denominator that grew
+along with their numerator. One raw layer means one set of changes, and both
+lenses see all of it. Two snapshots of the same code over two data cuts is the
+whole point of the snapshot model, and this script is how the second cut is
+reproducible rather than hand-made.
 
 ## Layout
 
@@ -104,12 +124,12 @@ workflows/             analysis workflows, snapshotted from the packages
   3_reporting/         the reporting data model       (gsm.reporting)
   3_reports/           safety chart reports           (gsm.safety)
   4_modules/           KRI report modules             (gsm.kri)
-input/                 study data — synthetic; two source families (below)
+input/                 study data — one synthetic raw layer (below)
 output/                results written by the pipeline (regenerable; not committed)
 scripts/
-  run-pipeline.R       the entry point: safety charts, then og_run()
+  make-raw-data.R      builds input/ from a fixed seed — the one raw layer
+  run-pipeline.R       the entry point: og_run(), then the safety charts
   run-safety-reports.R workflows/3_reports, which og_run() does not cover
-  make-safety-inputs.R regenerates the safety domain's input CSVs
   advance-cut.R        advances the inputs by one data cut, deterministically
   publish-snapshot.py  copies a completed run onto the site branch
 .github/workflows/     the Actions lane (templates — see the status note above)
@@ -127,7 +147,8 @@ against `config/study-config.yaml`.
 | rbqm   | RBQM   | gsm.viz    | `1_mappings`, `2_metrics`, `3_reporting`, `4_modules` |
 
 Both domains share `1_mappings`: mapping is study-level, and domains are lenses
-over the mapped data.
+over the mapped data. Not just in principle — every chart workflow in
+`3_reports` names a `Mapped_*` domain as its input.
 
 `3_reports` and `3_reporting` are two different phases from two different
 packages that happen to sort together — gsm.safety names its chart phase

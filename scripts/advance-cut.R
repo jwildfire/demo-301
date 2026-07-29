@@ -3,40 +3,28 @@
 # A DEMO-301 snapshot is only interesting next to another snapshot, and the
 # difference between two snapshots has to be a difference in the *data*, not in
 # the code. This script produces that difference deterministically: same seed,
-# same result, every time, on any machine. It appends only — nothing already in
-# input/ is edited or removed — so cut N+1 is a strict superset of cut N and the
-# diff on `main` is readable.
+# same result, every time, on any machine.
 #
-# What one cut adds, to both source families (see
-# scripts/make-safety-inputs.R for why there are two):
+# There is one raw layer now (see scripts/make-raw-data.R), so there is one set
+# of changes, and both lenses on the study see all of it:
 #
-#   Safety family (input/adbds.csv, adae.csv, adeg.csv)
-#     * a later scheduled visit for about a third of participants: labs, vitals
-#       and ECG carried forward from each participant's own most recent result
-#       with modest noise;
-#     * a handful of unmistakable outliers — six participants pushed to many
-#       multiples of the upper limit of normal on ALT, AST and bilirubin — so
-#       the charts have something to find;
+#   * a later scheduled visit for the participants still on study — labs and
+#     ECGs, carried forward from each participant's own most recent result with
+#     modest noise, and with the toxicity trajectory continuing for the
+#     participants who were already trending;
+#   * a handful of unmistakable laboratory outliers, so the eDISH view and the
+#     histogram have something new to find and the Grade 3+ Lab Abnormality KRI
+#     moves for the same sites;
+#   * about twenty-five new adverse events on existing participants;
+#   * five newly enrolled participants, with a baseline, the new visit, and a
+#     first adverse event each.
 #
-#       No ECG outliers are injected, deliberately. The vendored `adeg` already
-#       carries 637 QTcF results above 500 ms out of 1792 (35%), so an injected
-#       prolongation would be invisible against that background and would
-#       misrepresent what this cut actually changed. The ECG data moves by
-#       carry-forward only.
-#     * about twenty new adverse events on existing participants;
-#     * five newly enrolled participants, with a baseline and the new visit.
-#
-#   RBQM family (input/Raw_LB.csv, Raw_AE.csv, Raw_SUBJ.csv, Raw_ENROLL.csv)
-#     * the same shape of change in the operational data: a follow-up lab visit
-#       for the same fraction of participants, with a few toxicity grades
-#       escalated; twenty new adverse events; five new participants with their
-#       enrollment records.
+# The script appends and never edits, so cut N+1 is a strict superset of cut N
+# and the diff on `main` stays readable. It refuses to run twice: it stops if
+# the visit it would add is already present.
 #
 # Usage:
 #   Rscript scripts/advance-cut.R [project_dir]
-#
-# The script refuses to run twice: it stops if the visit it would add is
-# already present.
 
 args <- commandArgs(trailingOnly = TRUE)
 project_dir <- normalizePath(
@@ -44,333 +32,317 @@ project_dir <- normalizePath(
   mustWork = TRUE
 )
 
-set.seed(20260728)
+set.seed(20260801)
 
-SAFETY_VISIT <- "Week 28"
-SAFETY_VISITNUM <- 28
-RBQM_VISIT <- "Follow-up Week 28"
+VISIT_NAME <- "Week 16"
+VISIT_NUM <- 9L
+VISIT_DAY <- 113L
+EG_VISIT_NUM <- 5L
 N_NEW_SUBJECTS <- 5L
-N_NEW_AES <- 20L
-VISIT_FRACTION <- 1 / 3
-N_OUTLIER_SUBJECTS <- 6L
+N_NEW_AES <- 25L
+N_OUTLIER_SUBJECTS <- 8L
+# Participants who reach the new visit: those who were still on study near the
+# end of the previous cut.
+MIN_TIME_ON_STUDY <- 40L
+# Days of follow-up each continuing participant gains in this cut.
+TIME_GAINED <- 28L
 
 input <- function(name) file.path(project_dir, "input", name)
-read_input <- function(name) {
-  utils::read.csv(input(name), stringsAsFactors = FALSE)
-}
-write_input <- function(df, name) {
-  utils::write.csv(df, input(name), row.names = FALSE, na = "")
-  message(sprintf("  %-18s -> %d rows", name, nrow(df)))
-}
-`%||%` <- function(x, y) if (is.null(x)) y else x
 
-# --- Reading and appending the RBQM family without rewriting it -------------
-#
-# The Raw_* CSVs must never be round-tripped through read.csv + write.csv.
-# Every site identifier in this study has the form `0X4323`, which base R reads
-# as a HEXADECIMAL literal: `read.csv()` turns all 150 of them into decimal
-# integers (`0X4323` -> 17187). Reading with colClasses = "character" is the
-# only way to get the file's actual contents back.
-#
-# So the RBQM family is read as character and appended to as text. The original
-# bytes are never rewritten, which also keeps the diff on `main` an honest
-# append. The appended rows quote every field where the original quoted only
-# some; that is a cosmetic difference inside one valid CSV, and read.csv parses
-# both identically.
+# Every identifier in this study is deliberately non-numeric (`S384`,
+# `SITE4323`), but reading as character costs nothing and removes a whole class
+# of type-inference surprise.
 read_raw <- function(name) {
   utils::read.csv(input(name), colClasses = "character")
 }
-append_raw <- function(df_new, name) {
-  df_new[] <- lapply(df_new, as.character)
-  utils::write.table(
-    df_new, input(name),
-    append = TRUE, sep = ",", row.names = FALSE, col.names = FALSE,
-    quote = TRUE, qmethod = "double", na = ""
-  )
-  message(sprintf("  %-18s += %d rows", name, nrow(df_new)))
+write_raw <- function(df, name) {
+  utils::write.csv(df, input(name), row.names = FALSE, na = "")
+  message(sprintf("  %-18s -> %d rows", name, nrow(df)))
 }
 
-# ---------------------------------------------------------------------------
-# Safety family
-# ---------------------------------------------------------------------------
+subj <- read_raw("Raw_SUBJ.csv")
+enroll <- read_raw("Raw_ENROLL.csv")
+ae <- read_raw("Raw_AE.csv")
+lb <- read_raw("Raw_LB.csv")
+eg <- read_raw("Raw_EG.csv")
 
-adbds <- read_input("adbds.csv")
-adae <- read_input("adae.csv")
-adeg <- read_input("adeg.csv")
-
-if (SAFETY_VISIT %in% adbds$VISIT) {
+if (VISIT_NAME %in% lb$visnam) {
   stop(
     sprintf(
-      "input/adbds.csv already contains visit '%s' - the data has already been advanced.",
-      SAFETY_VISIT
+      "input/Raw_LB.csv already contains visit '%s' - the data has already been advanced.",
+      VISIT_NAME
     ),
     call. = FALSE
   )
 }
 
-subjects <- sort(unique(adbds$USUBJID))
-n_advance <- max(1L, round(length(subjects) * VISIT_FRACTION))
-advancing <- sort(sample(subjects, n_advance))
-outlier_subjects <- sort(sample(advancing, N_OUTLIER_SUBJECTS))
+cohort <- subj[subj$enrollyn == "Y", , drop = FALSE]
+continuing <- cohort$subjid[
+  as.integer(cohort$timeonstudy) >= MIN_TIME_ON_STUDY
+]
+outliers <- sort(sample(continuing, N_OUTLIER_SUBJECTS))
+cut_date <- as.character(as.Date(max(lb$lb_dt, na.rm = TRUE)) + 28)
 
 message(sprintf(
-  "Advancing %d of %d participants to '%s' (%d carrying clear outliers).",
-  length(advancing), length(subjects), SAFETY_VISIT, length(outlier_subjects)
+  "Advancing %d of %d participants to '%s' (%d carrying clear lab outliers).",
+  length(continuing), nrow(cohort), VISIT_NAME, length(outliers)
 ))
 
-# Each participant's most recent scheduled result per test, as the base for the
-# new visit.
-latest_by_test <- function(df, ids) {
-  sub <- df[df$USUBJID %in% ids & !is.na(df$STRESN), , drop = FALSE]
-  sub <- sub[order(sub$USUBJID, sub$TEST, sub$VISITNUM), , drop = FALSE]
-  key <- paste(sub$USUBJID, sub$TEST, sep = "\r")
+# Each participant's most recent result per test, as the base for the new visit.
+latest_by_test <- function(df, ids, test_col, order_col, value_col) {
+  sub <- df[df$subjid %in% ids & nzchar(df[[value_col]]), , drop = FALSE]
+  sub <- sub[order(sub$subjid, sub[[test_col]], as.numeric(sub[[order_col]])), ]
+  key <- paste(sub$subjid, sub[[test_col]], sep = "\r")
   sub[!duplicated(key, fromLast = TRUE), , drop = FALSE]
 }
 
-# --- adbds: the new visit for existing participants ---
-new_bds <- latest_by_test(adbds, advancing)
-new_bds$VISIT <- SAFETY_VISIT
-new_bds$VISITNUM <- SAFETY_VISITNUM
-new_bds$STRESN <- round(
-  new_bds$STRESN * (1 + stats::rnorm(nrow(new_bds), 0, 0.08)),
-  3
+# The CTCAE grade is derived from the result, in this script exactly as in
+# make-raw-data.R, so an advanced cut cannot drift into saying one thing in the
+# lab charts and another in the lab KRI.
+GRADE_CUTS <- list(
+  "Alanine Aminotransferase" = list("high", c(41, 123, 205, 820)),
+  "Aspartate Aminotransferase" = list("high", c(37, 111, 185, 740)),
+  "Alkaline Phosphatase" = list("high", c(120, 300, 600, 2400)),
+  "Bilirubin" = list("high", c(1.2, 1.8, 3.6, 12)),
+  "Gamma Glutamyl Transferase" = list("high", c(48, 120, 240, 960)),
+  "Creatinine" = list("high", c(1.2, 1.8, 3.6, 7.2)),
+  "Glucose" = list("high", c(5.6, 8.9, 13.9, 27.8)),
+  "Potassium" = list("high", c(5.1, 5.5, 6.0, 7.0)),
+  "Sodium" = list("low", c(135, 130, 125, 120)),
+  "Albumin" = list("low", c(3.5, 3.0, 2.0, 1.0)),
+  "Hemoglobin" = list("low", c(12, 10, 8, 6.5)),
+  "Hematocrit" = list("low", c(36, 30, 24, 20)),
+  "Platelets" = list("low", c(150, 75, 50, 25)),
+  "White Blood Cells" = list("low", c(4, 3, 2, 1)),
+  "Neutrophils" = list("low", c(1.8, 1.5, 1.0, 0.5)),
+  "Lymphocytes" = list("low", c(1.0, 0.8, 0.5, 0.2))
 )
 
-# The outliers: hepatic markers at many multiples of the upper limit of normal,
-# which is what the eDISH view and the histogram are for.
-hepatic <- c("Alanine Aminotransferase", "Aspartate Aminotransferase", "Bilirubin")
-is_outlier <- new_bds$USUBJID %in% outlier_subjects & new_bds$TEST %in% hepatic
-if (any(is_outlier)) {
-  multiplier <- stats::runif(sum(is_outlier), 3.5, 14)
-  new_bds$STRESN[is_outlier] <- round(
-    new_bds$STNRHI[is_outlier] * multiplier,
-    3
+DeriveGrade <- function(test, value) {
+  vapply(seq_along(test), function(i) {
+    rule <- GRADE_CUTS[[test[i]]]
+    if (is.null(rule)) {
+      return("0")
+    }
+    cuts <- rule[[2]]
+    n <- if (identical(rule[[1]], "high")) {
+      sum(value[i] > cuts)
+    } else {
+      sum(value[i] < cuts)
+    }
+    as.character(n)
+  }, character(1))
+}
+
+DecimalsFor <- function(test) {
+  ifelse(
+    test %in% c("Bilirubin", "Creatinine"), 2,
+    ifelse(
+      test %in% c(
+        "Glucose", "Potassium", "Albumin", "Hemoglobin", "Hematocrit",
+        "White Blood Cells", "Neutrophils", "Lymphocytes"
+      ), 1, 0
+    )
   )
 }
 
-# --- adbds: newly enrolled participants ---
-new_ids <- sprintf("01-999-90%02d", seq_len(N_NEW_SUBJECTS))
-donors <- sample(subjects, N_NEW_SUBJECTS)
-arms <- sample(unique(adbds$ARM), N_NEW_SUBJECTS, replace = TRUE)
-
-new_subject_rows <- do.call(rbind, lapply(seq_len(N_NEW_SUBJECTS), function(i) {
-  donor <- adbds[adbds$USUBJID == donors[i] & adbds$VISIT == "Baseline", , drop = FALSE]
-  donor <- donor[!duplicated(donor$TEST), , drop = FALSE]
-  if (nrow(donor) == 0L) {
-    return(NULL)
-  }
-  donor$USUBJID <- new_ids[i]
-  donor$SITE <- "Clinical Site 999"
-  donor$SITEID <- "999"
-  donor$ARM <- arms[i]
-  donor$STRESN <- round(
-    donor$STRESN * (1 + stats::rnorm(nrow(donor), 0, 0.06)),
-    3
-  )
-  followup <- donor
-  followup$VISIT <- SAFETY_VISIT
-  followup$VISITNUM <- SAFETY_VISITNUM
-  followup$STRESN <- round(
-    followup$STRESN * (1 + stats::rnorm(nrow(followup), 0, 0.08)),
-    3
-  )
-  rbind(donor, followup)
-}))
-
-adbds_out <- rbind(adbds, new_bds, new_subject_rows)
-
-# --- adeg: the same new visit, plus two clear QTcF prolongations ---
-new_eg <- latest_by_test(adeg, advancing)
-new_eg$VISIT <- SAFETY_VISIT
-new_eg$VISITNUM <- SAFETY_VISITNUM
-new_eg$ABLFL <- ""
-new_eg$STRESN <- round(
-  new_eg$STRESN * (1 + stats::rnorm(nrow(new_eg), 0, 0.04)),
-  1
-)
-new_eg$CHG <- round(new_eg$STRESN - new_eg$BASE, 1)
-
-new_eg_subjects <- do.call(rbind, lapply(seq_len(N_NEW_SUBJECTS), function(i) {
-  donor <- adeg[adeg$USUBJID == donors[i] & adeg$VISIT == "Baseline", , drop = FALSE]
-  donor <- donor[!duplicated(donor$TEST), , drop = FALSE]
-  if (nrow(donor) == 0L) {
-    return(NULL)
-  }
-  donor$USUBJID <- new_ids[i]
-  donor$SITE <- "Clinical Site 999"
-  donor$SITEID <- "999"
-  donor$ARM <- arms[i]
-  donor$STRESN <- round(donor$STRESN * (1 + stats::rnorm(nrow(donor), 0, 0.04)), 1)
-  donor$BASE <- donor$STRESN
-  donor$CHG <- 0
-  donor$ABLFL <- "Y"
-  followup <- donor
-  followup$VISIT <- SAFETY_VISIT
-  followup$VISITNUM <- SAFETY_VISITNUM
-  followup$ABLFL <- ""
-  followup$STRESN <- round(
-    followup$STRESN * (1 + stats::rnorm(nrow(followup), 0, 0.05)), 1
-  )
-  followup$CHG <- round(followup$STRESN - followup$BASE, 1)
-  rbind(donor, followup)
-}))
-
-adeg_out <- rbind(adeg, new_eg, new_eg_subjects)
-
-# --- adae: new adverse events ---
-ae_template <- adae[
-  adae$USUBJID %in% advancing & nzchar(adae$AEDECOD), ,
-  drop = FALSE
-]
-picked <- ae_template[sample(nrow(ae_template), N_NEW_AES), , drop = FALSE]
-# Some participants have no non-missing AESEQ or ASTDY at all, so these
-# maxima come back -Inf. Both are handled below; suppress the noise rather
-# than let a run that is behaving correctly look alarming.
-max_seq <- suppressWarnings(tapply(adae$AESEQ, adae$USUBJID, max, na.rm = TRUE))
-max_day <- suppressWarnings(tapply(adae$ASTDY, adae$USUBJID, max, na.rm = TRUE))
-base_seq <- as.numeric(max_seq[picked$USUBJID])
-base_seq[!is.finite(base_seq)] <- 0
-picked$AESEQ <- as.integer(base_seq) + seq_len(nrow(picked))
-base_day <- as.numeric(max_day[picked$USUBJID])
-base_day[!is.finite(base_day)] <- 180
-picked$ASTDY <- as.integer(base_day + sample(5:40, nrow(picked), replace = TRUE))
-picked$AENDY <- picked$ASTDY + sample(1:14, nrow(picked), replace = TRUE)
-picked$AESEV <- sample(
-  c("MILD", "MODERATE", "SEVERE"), nrow(picked), replace = TRUE,
-  prob = c(0.5, 0.35, 0.15)
-)
-picked$AESER <- sample(c("N", "Y"), nrow(picked), replace = TRUE, prob = c(0.85, 0.15))
-
-new_ae_subjects <- do.call(rbind, lapply(seq_len(N_NEW_SUBJECTS), function(i) {
-  row <- ae_template[sample(nrow(ae_template), 1), , drop = FALSE]
-  row$USUBJID <- new_ids[i]
-  row$ARM <- arms[i]
-  row$AESEQ <- 1L
-  row$ASTDY <- as.integer(sample(10:150, 1))
-  row$AENDY <- row$ASTDY + sample(1:20, 1)
-  row$AESEV <- sample(c("MILD", "MODERATE"), 1)
-  row$AESER <- "N"
-  row
-}))
-
-adae_out <- rbind(adae, picked, new_ae_subjects)
-
-message("Safety family:")
-write_input(adbds_out, "adbds.csv")
-write_input(adae_out, "adae.csv")
-write_input(adeg_out, "adeg.csv")
-
 # ---------------------------------------------------------------------------
-# RBQM family
+# Labs
 # ---------------------------------------------------------------------------
 
-raw_subj <- read_raw("Raw_SUBJ.csv")
-raw_enroll <- read_raw("Raw_ENROLL.csv")
-raw_ae <- read_raw("Raw_AE.csv")
-raw_lb <- read_raw("Raw_LB.csv")
+new_lb <- latest_by_test(lb, continuing, "lbtstnam", "visnum", "lbstresn")
+new_lb$visnam <- VISIT_NAME
+new_lb$visnum <- as.character(VISIT_NUM)
+new_lb$lb_dy <- as.character(VISIT_DAY)
+new_lb$lb_dt <- cut_date
+new_lb$lbblfl <- ""
 
-if (RBQM_VISIT %in% raw_lb$visnam) {
-  stop(
-    sprintf("input/Raw_LB.csv already contains visit '%s'.", RBQM_VISIT),
-    call. = FALSE
-  )
+value <- as.numeric(new_lb$lbstresn) * (1 + stats::rnorm(nrow(new_lb), 0, 0.08))
+
+# The outliers: hepatic and haematological markers pushed to many multiples of
+# their limit of normal, which is what the eDISH view and the histogram are for.
+high_markers <- c(
+  "Alanine Aminotransferase", "Aspartate Aminotransferase", "Bilirubin",
+  "Gamma Glutamyl Transferase"
+)
+low_markers <- c("Platelets", "Neutrophils")
+is_high <- new_lb$subjid %in% outliers & new_lb$lbtstnam %in% high_markers
+is_low <- new_lb$subjid %in% outliers & new_lb$lbtstnam %in% low_markers
+if (any(is_high)) {
+  value[is_high] <- as.numeric(new_lb$lbstnrhi[is_high]) *
+    stats::runif(sum(is_high), 3.5, 12)
+}
+if (any(is_low)) {
+  value[is_low] <- as.numeric(new_lb$lbstnrlo[is_low]) *
+    stats::runif(sum(is_low), 0.12, 0.35)
 }
 
-raw_subjects <- sort(unique(raw_subj$subjid))
-raw_advancing <- sort(sample(
-  raw_subjects, max(1L, round(length(raw_subjects) * VISIT_FRACTION))
+value <- round(value, DecimalsFor(new_lb$lbtstnam))
+new_lb$lbstresn <- as.character(value)
+new_lb$toxgrg_nsv <- DeriveGrade(new_lb$lbtstnam, value)
+
+# ---------------------------------------------------------------------------
+# ECG
+# ---------------------------------------------------------------------------
+
+new_eg <- latest_by_test(eg, continuing, "egtstnam", "visnum", "egstresn")
+new_eg$visnam <- VISIT_NAME
+new_eg$visnum <- as.character(EG_VISIT_NUM)
+new_eg$eg_dy <- as.character(VISIT_DAY)
+new_eg$eg_dt <- cut_date
+new_eg$egblfl <- ""
+new_eg$egstresn <- as.character(round(
+  as.numeric(new_eg$egstresn) * (1 + stats::rnorm(nrow(new_eg), 0, 0.035))
 ))
-raw_new_ids <- sprintf("S9000%02d", seq_len(N_NEW_SUBJECTS))
-cut_date <- as.character(as.Date(max(raw_lb$lb_dt, na.rm = TRUE)) + 28)
 
-# --- Raw_SUBJ / Raw_ENROLL: newly enrolled participants ---
-subj_donors <- sample(nrow(raw_subj), N_NEW_SUBJECTS)
-new_subj <- raw_subj[subj_donors, , drop = FALSE]
-new_subj$subjid <- raw_new_ids
-new_subj$subject_nsv <- paste0(raw_new_ids, "-XXXX")
-new_subj$mincreated_dts <- cut_date
+# ---------------------------------------------------------------------------
+# New participants
+# ---------------------------------------------------------------------------
+
+new_ids <- sprintf("S9000%02d", seq_len(N_NEW_SUBJECTS))
+donor_rows <- sample(which(subj$enrollyn == "Y"), N_NEW_SUBJECTS)
+
+new_subj <- subj[donor_rows, , drop = FALSE]
+new_subj$subjid <- new_ids
+new_subj$subject_nsv <- paste0(new_ids, "-XXXX")
 new_subj$enrollyn <- "Y"
 new_subj$enrolldt <- cut_date
+new_subj$mincreated_dts <- cut_date
+new_subj$firstparticipantdate <- cut_date
+new_subj$firstdosedate <- cut_date
+new_subj$timeonstudy <- as.character(sample(20:45, N_NEW_SUBJECTS))
+new_subj$timeontreatment <- new_subj$timeonstudy
+new_subj$arm <- sample(
+  c("Placebo", "Drug 40mg", "Drug 80mg"), N_NEW_SUBJECTS, replace = TRUE
+)
 
-new_enroll <- raw_enroll[
-  sample(nrow(raw_enroll), N_NEW_SUBJECTS), ,
-  drop = FALSE
-]
-new_enroll$subjid <- raw_new_ids
-new_enroll$subjectid <- paste0("XX-", raw_new_ids)
+new_enroll <- enroll[sample(nrow(enroll), N_NEW_SUBJECTS), , drop = FALSE]
+new_enroll$subjid <- new_ids
+new_enroll$subjectid <- paste0("XX-", new_ids)
 new_enroll$enroll_dt <- cut_date
 new_enroll$enrollyn <- "Y"
 new_enroll$invid <- new_subj$invid
 new_enroll$country <- new_subj$country
 
-# --- Raw_LB: a follow-up visit, with a few escalated toxicity grades ---
-lb_latest <- raw_lb[raw_lb$subjid %in% raw_advancing, , drop = FALSE]
-lb_latest <- lb_latest[
-  order(lb_latest$subjid, lb_latest$lbtstnam, lb_latest$lb_dt), ,
-  drop = FALSE
-]
-lb_key <- paste(lb_latest$subjid, lb_latest$lbtstnam, sep = "\r")
-new_lb <- lb_latest[!duplicated(lb_key, fromLast = TRUE), , drop = FALSE]
-new_lb$visnam <- RBQM_VISIT
-new_lb$lb_dt <- cut_date
-escalate <- sample(
-  c(FALSE, TRUE), nrow(new_lb), replace = TRUE, prob = c(0.97, 0.03)
+# A baseline and one follow-up for each new participant, donated from a
+# continuing participant's own record so the panel and its reference ranges are
+# internally consistent. They enrolled late, so their follow-up is Week 4 (day
+# 29) rather than the new Week 16 visit — their `timeonstudy` says so, and a
+# visit a participant could not have attended would be exactly the kind of
+# inconsistency this rebuild exists to remove.
+donors <- sample(continuing, N_NEW_SUBJECTS)
+FOLLOWUP_NAME <- "Week 4"
+FOLLOWUP_DAY <- "29"
+
+# `visnum` for the follow-up differs between the two domains: labs are drawn at
+# every scheduled visit, ECGs at four of them.
+NewParticipantRows <- function(src, test_col, value_col, day_col, date_col,
+                               flag_col, followup_num, decimals) {
+  do.call(rbind, lapply(seq_len(N_NEW_SUBJECTS), function(i) {
+    base <- src[src$subjid == donors[i] & src$visnum == "1", , drop = FALSE]
+    base <- base[!duplicated(base[[test_col]]), , drop = FALSE]
+    if (nrow(base) == 0L) {
+      return(NULL)
+    }
+    base$subjid <- new_ids[i]
+    base[[date_col]] <- cut_date
+    jitter <- function(v, n) {
+      round(as.numeric(v) * (1 + stats::rnorm(length(v), 0, n)), decimals(base))
+    }
+    base[[value_col]] <- as.character(jitter(base[[value_col]], 0.06))
+
+    followup <- base
+    followup$visnam <- FOLLOWUP_NAME
+    followup$visnum <- followup_num
+    followup[[day_col]] <- FOLLOWUP_DAY
+    followup[[date_col]] <- as.character(as.Date(cut_date) + 28)
+    followup[[flag_col]] <- ""
+    followup[[value_col]] <- as.character(jitter(followup[[value_col]], 0.08))
+    rbind(base, followup)
+  }))
+}
+
+new_lb_subjects <- NewParticipantRows(
+  lb, "lbtstnam", "lbstresn", "lb_dy", "lb_dt", "lbblfl", "5",
+  function(d) DecimalsFor(d$lbtstnam)
 )
-new_lb$toxgrg_nsv[escalate] <- sample(
-  c("3", "4"), sum(escalate), replace = TRUE, prob = c(0.6, 0.4)
+new_lb_subjects$toxgrg_nsv <- DeriveGrade(
+  new_lb_subjects$lbtstnam, as.numeric(new_lb_subjects$lbstresn)
 )
 
-# Donors must come from the participants who actually have lab records: only
-# some of Raw_SUBJ appears in Raw_LB, so sampling donors from the advancing set
-# would silently leave the new participants with no labs at all.
-lb_donor_pool <- unique(new_lb$subjid)
-lb_donors <- sample(lb_donor_pool, N_NEW_SUBJECTS)
-
-new_lb_subjects <- do.call(rbind, lapply(seq_len(N_NEW_SUBJECTS), function(i) {
-  donor <- new_lb[new_lb$subjid == lb_donors[i], , drop = FALSE]
-  if (nrow(donor) == 0L) {
-    return(NULL)
-  }
-  donor$subjid <- raw_new_ids[i]
-  donor$toxgrg_nsv <- sample(
-    c("0", "1", "2"), nrow(donor), replace = TRUE, prob = c(0.7, 0.2, 0.1)
-  )
-  donor
-}))
-
-new_lb_all <- rbind(new_lb, new_lb_subjects)
-
-# --- Raw_AE: new adverse events ---
-raw_ae_template <- raw_ae[raw_ae$subjid %in% raw_advancing, , drop = FALSE]
-raw_picked <- raw_ae_template[
-  sample(nrow(raw_ae_template), N_NEW_AES), ,
-  drop = FALSE
-]
-raw_picked$mincreated_dts <- cut_date
-raw_picked$aest_dt <- as.character(
-  as.Date(cut_date) + sample(0:20, N_NEW_AES, replace = TRUE)
+new_eg_subjects <- NewParticipantRows(
+  eg, "egtstnam", "egstresn", "eg_dy", "eg_dt", "egblfl", "2",
+  function(d) 0
 )
-raw_picked$aeen_dt <- as.character(
-  as.Date(raw_picked$aest_dt) + sample(1:10, N_NEW_AES, replace = TRUE)
+
+# ---------------------------------------------------------------------------
+# Adverse events
+# ---------------------------------------------------------------------------
+
+ae_template <- ae[ae$subjid %in% continuing, , drop = FALSE]
+picked <- ae_template[sample(nrow(ae_template), N_NEW_AES), , drop = FALSE]
+max_seq <- tapply(as.integer(ae$aeseq), ae$subjid, max)
+base_seq <- as.integer(max_seq[picked$subjid])
+base_seq[is.na(base_seq)] <- 0L
+picked$aeseq <- as.character(base_seq + seq_len(nrow(picked)))
+picked$aest_dy <- as.character(
+  as.integer(picked$aest_dy) + sample(20:60, nrow(picked), replace = TRUE)
 )
-raw_picked$aetoxgr <- as.character(sample(
-  1:4, N_NEW_AES, replace = TRUE, prob = c(0.4, 0.3, 0.2, 0.1)
+picked$aeen_dy <- as.character(
+  as.integer(picked$aest_dy) + sample(2:20, nrow(picked), replace = TRUE)
+)
+picked$aetoxgr <- as.character(sample(
+  1:4, nrow(picked), replace = TRUE, prob = c(0.35, 0.30, 0.22, 0.13)
 ))
-raw_picked$aeser <- sample(
-  c("N", "Y"), N_NEW_AES, replace = TRUE, prob = c(0.85, 0.15)
+picked$aesev <- c("MILD", "MODERATE", "SEVERE", "LIFE THREATENING")[
+  as.integer(picked$aetoxgr)
+]
+picked$aeser <- ifelse(
+  stats::runif(nrow(picked)) <
+    ifelse(as.integer(picked$aetoxgr) >= 3, 0.55, 0.05),
+  "Y", "N"
+)
+picked$aest_dt <- as.character(as.Date(cut_date) - sample(0:20, nrow(picked), replace = TRUE))
+picked$aeen_dt <- as.character(as.Date(picked$aest_dt) + sample(2:20, nrow(picked), replace = TRUE))
+picked$mincreated_dts <- cut_date
+
+new_subject_ae <- ae[sample(nrow(ae), N_NEW_SUBJECTS), , drop = FALSE]
+new_subject_ae$subjid <- new_ids
+new_subject_ae$aeseq <- "1"
+new_subject_ae$aest_dy <- as.character(sample(3:20, N_NEW_SUBJECTS))
+new_subject_ae$aeen_dy <- as.character(
+  as.integer(new_subject_ae$aest_dy) + sample(2:12, N_NEW_SUBJECTS)
+)
+new_subject_ae$aetoxgr <- as.character(sample(1:2, N_NEW_SUBJECTS, replace = TRUE))
+new_subject_ae$aesev <- c("MILD", "MODERATE")[as.integer(new_subject_ae$aetoxgr)]
+new_subject_ae$aeser <- "N"
+new_subject_ae$aeongo <- "N"
+new_subject_ae$aest_dt <- cut_date
+new_subject_ae$aeen_dt <- as.character(as.Date(cut_date) + 7)
+new_subject_ae$mincreated_dts <- cut_date
+
+# ---------------------------------------------------------------------------
+# Extend follow-up for the continuing participants
+# ---------------------------------------------------------------------------
+#
+# A data cut is not only new rows: the participants still on study have been on
+# it longer. Without this, the AE rate KRI would see a numerator that grew and
+# a denominator that did not, and every continuing site would look like it had
+# deteriorated.
+
+is_continuing <- subj$subjid %in% continuing
+subj$timeonstudy[is_continuing] <- as.character(
+  as.integer(subj$timeonstudy[is_continuing]) + TIME_GAINED
+)
+subj$timeontreatment[is_continuing] <- as.character(
+  as.integer(subj$timeontreatment[is_continuing]) + TIME_GAINED
 )
 
-raw_new_ae <- raw_ae[sample(nrow(raw_ae), N_NEW_SUBJECTS), , drop = FALSE]
-raw_new_ae$subjid <- raw_new_ids
-raw_new_ae$mincreated_dts <- cut_date
-raw_new_ae$aest_dt <- as.character(as.Date(cut_date) + 3)
-raw_new_ae$aeen_dt <- as.character(as.Date(cut_date) + 8)
-raw_new_ae$aeser <- "N"
-
-message("RBQM family (appended, originals untouched):")
-append_raw(new_subj, "Raw_SUBJ.csv")
-append_raw(new_enroll, "Raw_ENROLL.csv")
-append_raw(rbind(raw_picked, raw_new_ae), "Raw_AE.csv")
-append_raw(new_lb_all, "Raw_LB.csv")
+message("\nWriting input/:")
+write_raw(rbind(subj, new_subj), "Raw_SUBJ.csv")
+write_raw(rbind(enroll, new_enroll), "Raw_ENROLL.csv")
+write_raw(rbind(ae, picked, new_subject_ae), "Raw_AE.csv")
+write_raw(rbind(lb, new_lb, new_lb_subjects), "Raw_LB.csv")
+write_raw(rbind(eg, new_eg, new_eg_subjects), "Raw_EG.csv")
 
 message("\nData cut advanced. Re-run scripts/run-pipeline.R to produce the next snapshot.")

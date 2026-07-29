@@ -2,33 +2,45 @@ meta:
   Type: Report
   ID: safety_shift_plot
   Output: html
-  Data: adbds
+  Data: Mapped_LB
   Name: Safety Shift Plot Report
-  Description: Interactive safety.viz shift plot pairing baseline and comparison visit results.
+  Description: Interactive safety.viz shift plot pairing each participant's baseline laboratory result with their Week 4 result.
   lSettings:
+    measure_col: lbtstnam
+    value_col: lbstresn
+    visit_col: visnam
+    visit_order_col: visnum
+    id_col: subjid
+    unit_col: lbstresu
     filters:
-      - value_col: SITEID
-        label: Site ID
-      - value_col: SEX
+      - value_col: invid
+        label: Site
+      - value_col: sex
         label: Sex
-      - value_col: RACE
+      - value_col: race
         label: Race
-      - value_col: ARM
+      - value_col: arm
         label: Treatment Group
     baseline_visits:
       - Baseline
     comparison_visits:
-      - Week 26
+      - Week 4
 spec:
   dfResults:
-    USUBJID:
+    subjid:
       type: character
-    TEST:
+    lbtstnam:
       type: character
-    VISIT:
+    visnam:
       type: character
-    STRESN:
+    visnum:
+      type: integer
+    lbstresn:
       type: numeric
+    arm:
+      type: character
+    invid:
+      type: character
 steps:
   - output: strOutputDir
     name: getwd

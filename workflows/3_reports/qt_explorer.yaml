@@ -2,29 +2,57 @@ meta:
   Type: Report
   ID: qt_explorer
   Output: html
-  Data: adeg
+  Data: Mapped_EG
   Name: QT Safety Explorer Report
-  Description: Interactive safety.viz QT/QTc safety explorer with central tendency against the ICH E14 threshold, outlier scatter, and categorical summaries.
+  Description: Interactive safety.viz QT/QTc safety explorer with central tendency against the ICH E14 threshold, outlier scatter, and categorical summaries. Change from baseline is the `egchg` the ECG mapping derived.
   lSettings:
+    id_col: subjid
+    measure_col: egtstnam
+    value_col: egstresn
+    baseline_col: egbase
+    change_col: egchg
+    unit_col: egstresu
+    arm_col: arm
     placebo_arm: Placebo
+    visit_col: visnam
+    visitn_col: visnum
+    baseline_flag_col: egblfl
+    measures:
+      - QTcF
+      - QTcB
+      - Heart Rate
+      - PR Interval
+      - QRS Duration
+    qtc_measures:
+      - QTcF
+      - QTcB
+    start_measure: QTcF
     filters:
-      - value_col: SEX
+      - value_col: sex
         label: Sex
-      - value_col: RACE
+      - value_col: race
         label: Race
-      - value_col: SITE
+      - value_col: invid
         label: Site
 spec:
   dfResults:
-    USUBJID:
+    subjid:
       type: character
-    TEST:
+    egtstnam:
       type: character
-    STRESN:
+    egstresn:
       type: numeric
-    BASE:
+    egbase:
       type: numeric
-    ARM:
+    egchg:
+      type: numeric
+    visnam:
+      type: character
+    visnum:
+      type: integer
+    arm:
+      type: character
+    invid:
       type: character
 steps:
   - output: strOutputDir

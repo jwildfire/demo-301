@@ -11,8 +11,16 @@ meta:
   AnalysisType: binary
   Threshold: "2,3"
   Flag: "0,1,2"
-  AccrualThreshold: 10
-  AccrualMetric: Numerator
+  # Accrual guard, adjusted for the unified raw layer (hub#134). The source
+  # study's Raw_LB carried 45 analytes with a bare toxicity grade and no
+  # result; DEMO-301's carries a 16-analyte panel with real values, from which
+  # the grade is derived. That cut the lab records per site from ~1,600 to
+  # ~350, so a numerator guard of 10 grade 3+ results now suppresses seven
+  # sites in eight. Guarding on the denominator instead — assess a site's rate
+  # once it has 100 lab records — is both the same intent and what the rate
+  # KRIs beside it already do.
+  AccrualThreshold: 100
+  AccrualMetric: Denominator
 spec:
   Mapped_SUBJ:
     subjid:

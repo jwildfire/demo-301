@@ -9,16 +9,24 @@
 #
 #   output/3_reports/{workflow_id}/{workflow_id}.html
 #
-# Each chart workflow declares the input domain it reads in `meta.Data`
-# (e.g. `Data: adbds`); the domain resolves to a file through
-# config/data-config.yaml, falling back to `input/{domain}.csv`. Columns are
-# coerced to the types the workflow's own `spec` declares, so a CSV round-trip
-# cannot silently turn a numeric result into a string.
+# Each chart workflow declares the domain it reads in `meta.Data`. Every one of
+# them now names a *mapped* domain — `Mapped_LB`, `Mapped_AE`, `Mapped_EG` —
+# which resolves to the CSV the mapping phase wrote at
 #
-# Order matters: run this BEFORE og_run(). og_run() regenerates _index.json
-# and status.json by scanning what is on disk, so running it last means the
-# 3_reports HTML is already there to be recorded. Running this script alone
-# refreshes those two payload files itself.
+#   output/1_mappings/{ID}/{domain}.csv
+#
+# so the charts and the RBQM metrics read the same rows, produced by the same
+# workflows, from the one raw layer in input/. A domain that is not a mapped
+# one still resolves through config/data-config.yaml, falling back to
+# `input/{domain}.csv`. Columns are coerced to the types the workflow's own
+# `spec` declares, so a CSV round-trip cannot silently turn a numeric result
+# into a string.
+#
+# Order matters: run this AFTER og_run(), because the mapped CSVs this reads
+# are og_run()'s phase 1 output. og_run() regenerates _index.json and
+# status.json by scanning what is on disk, so this script refreshes both
+# again at the end — otherwise a chart rendered after og_run() finished would
+# be recorded as `not_run`.
 #
 # Usage:
 #   Rscript scripts/run-safety-reports.R [project_dir]
@@ -46,6 +54,14 @@ data_config <- local({
 })
 
 resolve_input <- function(domain) {
+  # A mapped domain is the mapping phase's output, not an input file.
+  # `Mapped_LB` -> output/1_mappings/LB/Mapped_LB.csv
+  if (grepl("^Mapped_", domain)) {
+    return(file.path(
+      project_dir, "output", "1_mappings",
+      sub("^Mapped_", "", domain), paste0(domain, ".csv")
+    ))
+  }
   configured <- data_config[[domain]]
   path <- if (is.null(configured)) {
     file.path(project_dir, "input", paste0(domain, ".csv"))
@@ -108,7 +124,14 @@ for (id in names(lWorkflows)) {
       }
       path <- resolve_input(domain)
       if (!file.exists(path)) {
-        stop(sprintf("input file not found: %s", path), call. = FALSE)
+        stop(sprintf(
+          "data for domain '%s' not found at %s%s", domain, path,
+          if (grepl("^Mapped_", domain)) {
+            " - run the mapping phase (og_run) first"
+          } else {
+            ""
+          }
+        ), call. = FALSE)
       }
       if (is.null(cache[[domain]])) {
         cache[[domain]] <- utils::read.csv(path, stringsAsFactors = FALSE)

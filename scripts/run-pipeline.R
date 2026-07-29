@@ -2,13 +2,18 @@
 # snapshot. Both lanes (local and Actions) call this, so both write the same
 # tree.
 #
-#   1. Safety domain  — workflows/3_reports  (scripts/run-safety-reports.R)
-#   2. RBQM domain    — workflows/1_mappings, 2_metrics, 3_reporting,
+#   1. RBQM domain    — workflows/1_mappings, 2_metrics, 3_reporting,
 #                       4_modules            (open.gismo::og_run)
+#   2. Safety domain  — workflows/3_reports  (scripts/run-safety-reports.R)
 #
-# Order is deliberate. og_run() regenerates _index.json and status.json by
-# scanning what is on disk, so the Safety charts must already exist when it
-# runs or they are recorded as `not_run`.
+# Order is deliberate, and it is the opposite of what it used to be. The Safety
+# charts no longer read a source family of their own: every one of them reads a
+# `Mapped_*` domain, which is og_run()'s phase 1 output. Mapping has to happen
+# before the charts can be drawn.
+#
+# og_run() regenerates _index.json and status.json by scanning what is on disk,
+# which now happens before the charts exist; run-safety-reports.R rewrites both
+# when it finishes, so the payload files still describe the whole snapshot.
 #
 # Usage:
 #   Rscript scripts/run-pipeline.R [project_dir]
@@ -41,16 +46,17 @@ curated_manifest <- if (file.exists(manifest_path)) {
   NULL
 }
 
-# --- 1. Safety domain -------------------------------------------------------
+# --- 1. RBQM domain ---------------------------------------------------------
+message("=== RBQM domain: og_run() ===")
+res <- open.gismo::og_run(project_dir)
+
+# --- 2. Safety domain -------------------------------------------------------
+# Reads the Mapped_* CSVs phase 1 just wrote.
 message("=== Safety domain: workflows/3_reports ===")
 safety <- system2(
   file.path(R.home("bin"), "Rscript"),
   c(shQuote(file.path(script_dir, "run-safety-reports.R")), shQuote(project_dir))
 )
-
-# --- 2. RBQM domain ---------------------------------------------------------
-message("=== RBQM domain: og_run() ===")
-res <- open.gismo::og_run(project_dir)
 
 # --- 3. Restore the curated manifest ---------------------------------------
 if (!is.null(curated_manifest)) {

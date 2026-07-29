@@ -17,6 +17,8 @@ spec:
       type: character
     enrollyn:
       type: character
+    arm:
+      type: character
     timeonstudy:
       type: integer
     firstparticipantdate:

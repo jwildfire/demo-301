@@ -2,33 +2,48 @@ meta:
   Type: Report
   ID: safety_delta_delta
   Output: html
-  Data: adbds
+  Data: Mapped_LB
   Name: Safety Delta-Delta Report
-  Description: Interactive safety.viz delta-delta plot of change-from-baseline in two labs measures.
+  Description: Interactive safety.viz delta-delta plot of change from baseline in two laboratory measures, on the study's own visit schedule.
   lSettings:
-    filters:
-      - value_col: SITE
-        label: Site
-      - value_col: SEX
-        label: Sex
-      - value_col: RACE
-        label: Race
-      - value_col: ARM
-        label: Treatment Group
-      - value_col: USUBJID
-        label: Participant ID
+    measure_col: lbtstnam
+    value_col: lbstresn
+    id_col: subjid
+    visit_col: visnam
+    visitn_col: visnum
     measure_x: Alanine Aminotransferase
     measure_y: Aspartate Aminotransferase
+    baseline_visits:
+      - Baseline
+    comparison_visits:
+      - Week 4
     add_regression_line: true
+    filters:
+      - value_col: invid
+        label: Site
+      - value_col: sex
+        label: Sex
+      - value_col: race
+        label: Race
+      - value_col: arm
+        label: Treatment Group
+      - value_col: subjid
+        label: Participant ID
 spec:
   dfResults:
-    USUBJID:
+    subjid:
       type: character
-    TEST:
+    lbtstnam:
       type: character
-    STRESN:
+    lbstresn:
       type: numeric
-    VISIT:
+    visnam:
+      type: character
+    visnum:
+      type: integer
+    arm:
+      type: character
+    invid:
       type: character
 steps:
   - output: strOutputDir
