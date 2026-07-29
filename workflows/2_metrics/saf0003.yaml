@@ -1,0 +1,90 @@
+meta:
+  Type: Analysis
+  ID: saf0003
+  GroupLevel: Subject
+  Abbreviation: SRAE
+  Metric: Serious / Related AE (Subject)
+  Numerator: AE Review Tier
+  Denominator: Enrolled Participant
+  Model: Identity
+  Score: Numerator
+  AnalysisType: identity
+  # Score is the AE review tier: 0 none, 1 related non-serious, 2 serious or
+  # discontinuation, 3 serious AND related at or above the grade cut.
+  #
+  # Tier 1 is deliberately NOT flagged. Measured on the demo study, 67.8% of
+  # participants have at least one related AE and 41.7% at least one serious
+  # one - "has a related non-serious AE" is a property of being in a trial, not
+  # a reason to open a chart. Amber starts at a serious event (tier 2), red at
+  # a serious, related event above the grade cut (tier 3).
+  Threshold: "2,3"
+  Flag: "0,1,2"
+  RiskScoreWeight: "0,4,16"
+  GenerateRiskSignal: false
+  # CTCAE grade at or above which a serious, related AE reaches tier 3.
+  # Grade 4 is life-threatening.
+  SeriousRelatedGrade: 4
+spec:
+  Mapped_AE:
+    subjid:
+      type: character
+    aeser:
+      type: character
+    aerel:
+      type: character
+    aetoxgr:
+      type: numeric
+  Mapped_SUBJ:
+    subjid:
+      type: character
+steps:
+  - output: vThreshold
+    name: gsm.core::ParseThreshold
+    params:
+      strThreshold: Threshold
+  - output: vFlag
+    name: gsm.core::ParseThreshold
+    params:
+      strThreshold: Flag
+      bSort: false
+  - output: vRiskScoreWeight
+    name: gsm.core::ParseThreshold
+    params:
+      strThreshold: RiskScoreWeight
+      bSort: false
+  - output: Analysis_Input
+    name: gsm.safety::Input_SafetyAE
+    params:
+      dfAE: Mapped_AE
+      dfSubjects: Mapped_SUBJ
+      nSeriousRelatedGrade: SeriousRelatedGrade
+      strGroupLevel: GroupLevel
+  - output: Analysis_Transformed
+    name: gsm.core::Transform_Rate
+    params:
+      dfInput: Analysis_Input
+  - output: Analysis_Analyzed
+    name: gsm.core::Analyze_Identity
+    params:
+      dfTransformed: Analysis_Transformed
+      strValueCol: Score
+  - output: Analysis_Flagged
+    name: gsm.core::Flag
+    params:
+      dfAnalyzed: Analysis_Analyzed
+      vThreshold: vThreshold
+      vFlag: vFlag
+      vRiskScoreWeight: vRiskScoreWeight
+  - output: Analysis_Summary
+    name: gsm.core::Summarize
+    params:
+      dfFlagged: Analysis_Flagged
+  - output: lAnalysis
+    name: list
+    params:
+      ID: ID
+      Analysis_Input: Analysis_Input
+      Analysis_Transformed: Analysis_Transformed
+      Analysis_Analyzed: Analysis_Analyzed
+      Analysis_Flagged: Analysis_Flagged
+      Analysis_Summary: Analysis_Summary

@@ -100,9 +100,11 @@ jobs:
         run: Rscript -e 'v <- open.gismo::og_validate("."); print(v); if (any(v$status %in% c("missing", "error"))) stop("Input validation failed.")'
 
       - name: Run the pipeline
-        # Not og_run() directly: og_run() covers the four RBQM phases but not
-        # workflows/3_reports (the safety charts). scripts/run-pipeline.R runs
-        # both, in the order that leaves status.json describing both.
+        # Not og_run() directly: og_run() runs the module workflows in
+        # workflows/4_modules that read the reporting layer, but not the safety
+        # chart workflows beside them (the ones declaring meta.Data).
+        # scripts/run-pipeline.R runs both, in the order that leaves
+        # status.json describing both.
         run: Rscript scripts/run-pipeline.R .
 
       - name: Publish the snapshot to the site branch

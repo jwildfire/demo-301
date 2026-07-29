@@ -21,7 +21,7 @@ Raw_STUDCOMP: input/Raw_STUDCOMP.csv
 Raw_STUDY: input/Raw_STUDY.csv
 Raw_SUBJ: input/Raw_SUBJ.csv
 
-# The Safety chart workflows in workflows/3_reports do not appear here. They
+# The Safety chart workflows in workflows/4_modules do not appear here. They
 # read *mapped* domains, not raw ones: each names `Mapped_LB`, `Mapped_AE` or
 # `Mapped_EG` in its own `meta.Data` key, and scripts/run-safety-reports.R
 # resolves those to the CSVs the mapping phase wrote under

@@ -1,0 +1,90 @@
+meta:
+  Type: Analysis
+  ID: saf0001
+  GroupLevel: Subject
+  Abbreviation: HYLAW
+  Metric: Hy's Law Candidate (Subject)
+  Numerator: eDISH Quadrant Tier
+  Denominator: Assessed Participant
+  Model: Identity
+  Score: Numerator
+  AnalysisType: identity
+  # Score is the eDISH quadrant tier: 0 normal, 1 one axis only, 2 both axes
+  # with a cholestatic pattern, 3 potential Hy's Law. Tiers 1-2 are amber,
+  # tier 3 is red.
+  Threshold: "1,3"
+  Flag: "0,1,2"
+  RiskScoreWeight: "0,4,16"
+  # Participant flags are a case-review queue, not an input to a site risk
+  # score: a site's score should not move because one of its participants was
+  # queued for review.
+  GenerateRiskSignal: false
+  # Cut-points, in xULN, from the hep-explorer data contract
+  # (inst/schema/hep-explorer.json): cuts.defaults.relative_uln = 3 for the
+  # aminotransferases, cuts.TB.relative_uln = 2 for total bilirubin. The
+  # cholestatic cut is the standard Hy's Law exclusion at 2xULN.
+  AminotransferaseCut: 3
+  BilirubinCut: 2
+  CholestaticCut: 2
+spec:
+  Mapped_LB:
+    subjid:
+      type: character
+    lbtstnam:
+      type: character
+    lbstresn:
+      type: numeric
+    lbstnrhi:
+      type: numeric
+steps:
+  - output: vThreshold
+    name: gsm.core::ParseThreshold
+    params:
+      strThreshold: Threshold
+  - output: vFlag
+    name: gsm.core::ParseThreshold
+    params:
+      strThreshold: Flag
+      bSort: false
+  - output: vRiskScoreWeight
+    name: gsm.core::ParseThreshold
+    params:
+      strThreshold: RiskScoreWeight
+      bSort: false
+  - output: Analysis_Input
+    name: gsm.safety::Input_HysLaw
+    params:
+      dfLabs: Mapped_LB
+      nAminotransferaseCut: AminotransferaseCut
+      nBilirubinCut: BilirubinCut
+      nCholestaticCut: CholestaticCut
+      strGroupLevel: GroupLevel
+  - output: Analysis_Transformed
+    name: gsm.core::Transform_Rate
+    params:
+      dfInput: Analysis_Input
+  - output: Analysis_Analyzed
+    name: gsm.core::Analyze_Identity
+    params:
+      dfTransformed: Analysis_Transformed
+      strValueCol: Score
+  - output: Analysis_Flagged
+    name: gsm.core::Flag
+    params:
+      dfAnalyzed: Analysis_Analyzed
+      vThreshold: vThreshold
+      vFlag: vFlag
+      vRiskScoreWeight: vRiskScoreWeight
+  - output: Analysis_Summary
+    name: gsm.core::Summarize
+    params:
+      dfFlagged: Analysis_Flagged
+  - output: lAnalysis
+    name: list
+    params:
+      ID: ID
+      Analysis_Input: Analysis_Input
+      Analysis_Transformed: Analysis_Transformed
+      Analysis_Analyzed: Analysis_Analyzed
+      Analysis_Flagged: Analysis_Flagged
+      Analysis_Summary: Analysis_Summary
