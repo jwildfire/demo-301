@@ -47,11 +47,13 @@ Rscript scripts/run-pipeline.R .   # run every phase of both domains
 `og_validate()` is the forgiveness layer: it names exactly which domain, file,
 and column is missing rather than failing deep inside a pipeline step.
 
-`scripts/run-pipeline.R` is the entry point rather than `og_run()` alone,
-because `og_run()` covers the four RBQM phases but not `workflows/3_reports/`.
-It runs `og_run()` first and the safety charts second: the charts read the
-`Mapped_*` domains the mapping phase writes, so mapping has to happen before
-they can be drawn.
+`scripts/run-pipeline.R` is the entry point rather than `og_run()` alone.
+Both lanes now write to `workflows/4_modules/`, but `og_run()` only runs the
+module workflows that read the reporting layer; the safety chart workflows
+declare the data domain they read in `meta.Data`, and
+`scripts/run-safety-reports.R` runs those. It runs `og_run()` first and the
+safety charts second: the charts read the `Mapped_*` domains the mapping phase
+writes, so mapping has to happen before they can be drawn.
 
 ## One raw layer
 
@@ -120,16 +122,18 @@ config/
 manifest.csv           the environment record — package versions and SHAs
 workflows/             analysis workflows, snapshotted from the packages
   1_mappings/          raw -> mapped domains          (gsm.mapping)
-  2_metrics/           KRI and country metrics        (gsm.kri)
+  2_metrics/           KRI + country metrics          (gsm.kri)
+                       participant safety metrics     (gsm.safety)
   3_reporting/         the reporting data model       (gsm.reporting)
-  3_reports/           safety chart reports           (gsm.safety)
   4_modules/           KRI report modules             (gsm.kri)
+                       safety chart reports           (gsm.safety)
 input/                 study data — one synthetic raw layer (below)
 output/                results written by the pipeline (regenerable; not committed)
 scripts/
   make-raw-data.R      builds input/ from a fixed seed — the one raw layer
-  run-pipeline.R       the entry point: og_run(), then the safety charts
-  run-safety-reports.R workflows/3_reports, which og_run() does not cover
+  run-pipeline.R       the entry point: og_run(), then the safety lanes
+  run-safety-reports.R the chart workflows in 4_modules that og_run() skips
+  safety-census.R      the Safety overview's denominators and coverage
   advance-cut.R        advances the inputs by one data cut, deterministically
   publish-snapshot.py  copies a completed run onto the site branch
 .github/workflows/     the Actions lane (templates — see the status note above)
@@ -143,17 +147,45 @@ against `config/study-config.yaml`.
 
 | Domain | Label  | Charts     | Workflow phases                                |
 | ------ | ------ | ---------- | ---------------------------------------------- |
-| safety | Safety | safety.viz | `1_mappings`, `3_reports`                      |
+| safety | Safety | safety.viz | `1_mappings`, `2_metrics`, `4_modules`         |
 | rbqm   | RBQM   | gsm.viz    | `1_mappings`, `2_metrics`, `3_reporting`, `4_modules` |
 
 Both domains share `1_mappings`: mapping is study-level, and domains are lenses
 over the mapped data. Not just in principle — every chart workflow in
-`3_reports` names a `Mapped_*` domain as its input.
+`4_modules` names a `Mapped_*` domain as its input.
 
-`3_reports` and `3_reporting` are two different phases from two different
-packages that happen to sort together — gsm.safety names its chart phase
-`3_reports`, gsm.reporting uses `3_reporting`. Rather than rename either one,
-the domain registry lists the phases each domain runs, explicitly.
+They now share phase *names* as well. gsm.safety used to call its chart phase
+`3_reports`, which sorted next to gsm.reporting's unrelated `3_reporting` and
+made the registry the only thing telling them apart; the charts moved to the
+standard `4_modules` in hub#136, so both domains draw from the same four
+numbered phases and the registry says which of them each domain runs. Inside
+`4_modules` the two lanes are told apart by `meta.Data`: a chart workflow names
+the domain it reads, a KRI module report does not.
+
+## Participant-level safety metrics
+
+The Safety domain runs `2_metrics` as well as the RBQM domain does, over the same
+mapped data. Three participant-level metrics from gsm.safety score one row per
+participant and flag them for review:
+
+| Metric | ID | Red flag means | Cut-points from |
+| ------ | -- | -------------- | --------------- |
+| Hy's Law candidate | `saf0001` | both eDISH axes elevated with a hepatocellular pattern | `hep-explorer.json` |
+| QTcF prolongation | `saf0002` | QTcF at or above 500 ms, or a change at or above 60 ms | `qt-explorer.json` (ICH E14) |
+| Serious / related AE | `saf0003` | a serious, related AE at CTCAE grade 4 | AE domain fields |
+
+They emit the same `analyticsSummary` contract the KRIs do, at
+`GroupLevel: Subject` rather than `Site`, so they flow through `3_reporting`
+untouched — `report_kri_site.yaml` filters on `GroupLevel == 'Site'` and never
+sees them. They set `GenerateRiskSignal: false`: a participant queued for review
+should not move their site's risk score.
+
+`scripts/safety-census.R` reduces the mapped domains to the denominators the
+Safety overview leads with — enrolment, exposure, disposition, and lab and ECG
+coverage per visit — into `output/4_modules/safety_census.json`. That file exists
+so the browser never has to read a 57k-row lab domain to draw a coverage bar.
+
+Every safety figure is pooled across treatment arms.
 
 ## Provenance
 

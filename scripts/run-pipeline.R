@@ -4,7 +4,9 @@
 #
 #   1. RBQM domain    — workflows/1_mappings, 2_metrics, 3_reporting,
 #                       4_modules            (open.gismo::og_run)
-#   2. Safety domain  — workflows/3_reports  (scripts/run-safety-reports.R)
+#   2. Safety domain  — the chart workflows in workflows/4_modules
+#                       (scripts/run-safety-reports.R), then the overview's
+#                       denominators (scripts/safety-census.R)
 #
 # Order is deliberate, and it is the opposite of what it used to be. The Safety
 # charts no longer read a source family of their own: every one of them reads a
@@ -52,13 +54,22 @@ res <- open.gismo::og_run(project_dir)
 
 # --- 2. Safety domain -------------------------------------------------------
 # Reads the Mapped_* CSVs phase 1 just wrote.
-message("=== Safety domain: workflows/3_reports ===")
+message("=== Safety domain: chart workflows in workflows/4_modules ===")
 safety <- system2(
   file.path(R.home("bin"), "Rscript"),
   c(shQuote(file.path(script_dir, "run-safety-reports.R")), shQuote(project_dir))
 )
 
-# --- 3. Restore the curated manifest ---------------------------------------
+# --- 3. Safety overview denominators ---------------------------------------
+# Reduces the mapped domains to the census, exposure and coverage figures the
+# Safety overview leads with, so the browser never loads a 57k-row lab domain.
+message("=== Safety domain: overview census ===")
+census <- system2(
+  file.path(R.home("bin"), "Rscript"),
+  c(shQuote(file.path(script_dir, "safety-census.R")), shQuote(project_dir))
+)
+
+# --- 4. Restore the curated manifest ---------------------------------------
 if (!is.null(curated_manifest)) {
   writeLines(curated_manifest, manifest_path)
   message("Restored the curated manifest.csv.")
@@ -71,6 +82,10 @@ print(res$timings)
 
 if (!identical(safety, 0L)) {
   message(
-    "\nNOTE: the Safety chart lane exited non-zero - see output/3_reports/reports.json."
+    "\nNOTE: the Safety chart lane exited non-zero - see output/4_modules/charts.json."
   )
+}
+
+if (!identical(census, 0L)) {
+  message("\nNOTE: the safety census lane exited non-zero.")
 }

@@ -10,6 +10,9 @@ history/
 # regenerated on publish, so main does not carry a stale copy.
 index.html
 
+# The longitudinal results store og_run() writes as it advances data cuts.
+history/
+
 # Snapshot payload files written by og_run() at the project root.
 _index.json
 status.json

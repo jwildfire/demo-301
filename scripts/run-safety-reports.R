@@ -1,13 +1,19 @@
 # run-safety-reports.R — run the Safety domain chart workflows.
 #
-# `open.gismo::og_run()` covers the four RBQM phases (1_mappings, 2_metrics,
-# 3_reporting, 4_modules). It does not cover `workflows/3_reports/` — the
-# gsm.safety chart workflows registered to the `safety` domain in
-# config/study-config.yaml. This script runs those, on the same workr
-# primitives og_run() uses (MakeWorkflowList + RunWorkflow), and writes their
+# The gsm.safety chart workflows live in `workflows/4_modules/`, the standard
+# gsm phase directory for `meta.Type: Report` workflows (hub#136). They share
+# that directory with the RBQM domain's KRI report modules, and the two are
+# told apart by one key: a chart workflow declares the data domain it reads in
+# `meta.Data`, a KRI module report does not. `open.gismo::og_run()` runs the
+# ones without `meta.Data`; this script runs the ones with it, on the same
+# workr primitives (MakeWorkflowList + RunWorkflow), and writes their
 # self-contained HTML to
 #
-#   output/3_reports/{workflow_id}/{workflow_id}.html
+#   output/4_modules/{workflow_id}/{workflow_id}.html
+#
+# alongside og_run()'s own module output. Its manifest is `charts.json`, kept
+# separate from og_run()'s `reports.json` so the two lanes never overwrite each
+# other's index of the same directory.
 #
 # Each chart workflow declares the domain it reads in `meta.Data`. Every one of
 # them now names a *mapped* domain — `Mapped_LB`, `Mapped_AE`, `Mapped_EG` —
@@ -43,9 +49,9 @@ for (pkg in c("workr", "gsm.safety", "yaml", "jsonlite")) {
   }
 }
 
-wf_dir <- file.path(project_dir, "workflows", "3_reports")
+wf_dir <- file.path(project_dir, "workflows", "4_modules")
 if (!dir.exists(wf_dir)) {
-  stop("No workflows/3_reports directory in ", project_dir, call. = FALSE)
+  stop("No workflows/4_modules directory in ", project_dir, call. = FALSE)
 }
 
 data_config <- local({
@@ -93,10 +99,19 @@ coerce_to_spec <- function(df, spec_domain) {
 }
 `%||%` <- function(x, y) if (is.null(x)) y else x
 
-lWorkflows <- workr::MakeWorkflowList(strPath = wf_dir)
+# 4_modules holds both lanes. A chart workflow names the data domain it reads
+# in `meta.Data`; a KRI module report reads the reporting layer and names none,
+# and og_run() has already run those. Take only the former.
+lAllModules <- workr::MakeWorkflowList(strPath = wf_dir)
+bIsChart <- vapply(
+  lAllModules,
+  function(wf) !is.null(wf$meta$Data) && nzchar(wf$meta$Data),
+  logical(1)
+)
+lWorkflows <- lAllModules[bIsChart]
 message(sprintf(
-  "Running %d Safety chart workflow(s) from %s",
-  length(lWorkflows), wf_dir
+  "Running %d Safety chart workflow(s) of %d module workflow(s) in %s",
+  length(lWorkflows), length(lAllModules), wf_dir
 ))
 
 results <- list()
@@ -138,7 +153,7 @@ for (id in names(lWorkflows)) {
       }
       dfResults <- coerce_to_spec(cache[[domain]], wf$spec$dfResults)
 
-      out_dir <- file.path(project_dir, "output", "3_reports", wf_id)
+      out_dir <- file.path(project_dir, "output", "4_modules", wf_id)
       dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
 
       # The workflow's first step is `getwd`, which becomes strOutputDir, so
@@ -150,7 +165,7 @@ for (id in names(lWorkflows)) {
       )
       setwd(old_wd)
 
-      html <- file.path("output", "3_reports", wf_id, paste0(wf_id, ".html"))
+      html <- file.path("output", "4_modules", wf_id, paste0(wf_id, ".html"))
       if (!file.exists(file.path(project_dir, html))) {
         stop("workflow completed but wrote no HTML", call. = FALSE)
       }
@@ -174,16 +189,17 @@ for (id in names(lWorkflows)) {
   ))
 }
 
-# A reports.json for the Safety domain, mirroring the shape og_run() writes for
-# output/4_modules. Failures are recorded, not dropped.
-payload_dir <- file.path(project_dir, "output", "3_reports")
+# A charts.json for the Safety domain, mirroring the shape og_run() writes to
+# reports.json in the same directory. Two files, one per lane, so neither
+# clobbers the other. Failures are recorded, not dropped.
+payload_dir <- file.path(project_dir, "output", "4_modules")
 dir.create(payload_dir, recursive = TRUE, showWarnings = FALSE)
 writeLines(
   jsonlite::toJSON(
     list(reports = unname(results)),
     auto_unbox = TRUE, pretty = TRUE, null = "null"
   ),
-  file.path(payload_dir, "reports.json")
+  file.path(payload_dir, "charts.json")
 )
 
 n_ok <- sum(vapply(results, function(r) r$status == "completed", logical(1)))
