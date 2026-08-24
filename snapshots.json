@@ -17,6 +17,12 @@
       "created_at": "2026-08-24T01:19:18Z",
       "input_data_version": "main-2088c82",
       "package_snapshot": "gha-32679109589"
+    },
+    {
+      "snapshot_id": "ps-004",
+      "created_at": "2026-08-24T01:26:18Z",
+      "input_data_version": "main-aa4f288",
+      "package_snapshot": "gha-32679521677"
     }
   ]
 }
