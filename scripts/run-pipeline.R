@@ -80,12 +80,24 @@ print(res$counts)
 message("=== timings (s) ===")
 print(res$timings)
 
+# --- 5. Fail if either sub-lane failed --------------------------------------
+#
+# These used to print a NOTE and exit 0. A snapshot missing its charts, or its
+# overview denominators, is not a snapshot worth publishing, and exiting 0 meant
+# the Actions lane would publish it anyway and report the run as green. Silence
+# is the failure mode this project has already been bitten by; do not add
+# another one here.
+failed <- character(0)
 if (!identical(safety, 0L)) {
-  message(
-    "\nNOTE: the Safety chart lane exited non-zero - see output/4_modules/charts.json."
-  )
+  failed <- c(failed, "the Safety chart lane (see output/4_modules/charts.json)")
 }
-
 if (!identical(census, 0L)) {
-  message("\nNOTE: the safety census lane exited non-zero.")
+  failed <- c(failed, "the Safety overview census lane")
+}
+if (length(failed)) {
+  stop(
+    "the pipeline did not complete: ", paste(failed, collapse = " and "),
+    " exited non-zero. Nothing should be published from this run.",
+    call. = FALSE
+  )
 }

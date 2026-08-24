@@ -1,25 +1,41 @@
-# build-site.yaml — TEMPLATE, NOT YET EXERCISED.
+# build-site.yaml — check what the `site` branch is about to serve, and deploy
+# it if this repository's Pages is set up to be deployed by Actions.
 #
-# Status (2026-07-28, hub#134 stage 3): this workflow is a plausible, reviewed
-# sketch. It has never been run, and GitHub Pages is not enabled on this repo
-# yet. The lane that is real today is local: og_run() writes the tree and
-# og_app() serves it from disk.
+# WHAT WAS HERE BEFORE, AND WHY IT NEVER RAN (2026-08-24, demo-301#4). This file
+# was written on 2026-07-28 as a template, with a header saying "GitHub Pages is
+# not enabled on this repo yet". Both halves of that turned out to be wrong when
+# the workflow was finally run for the first time:
 #
-# There is no build step, by design. The `site` branch root IS the artifact:
-# run-pipeline.yaml writes the static tree onto that branch, and this workflow
-# uploads it verbatim after asserting the five-file contract the app depends
-# on. Nothing here compiles, bundles, or templates anything.
+#   * Pages IS enabled, and has been since 2026-07-28. It publishes the `site`
+#     branch root verbatim through GitHub's own legacy branch lane — eight
+#     successful "pages build and deployment" runs, none of them this workflow.
+#     The live site does not depend on this file and never has.
+#   * The old single `deploy` job could not have succeeded from anywhere. The
+#     `github-pages` environment admits only the `gh-pages` and `site` branches,
+#     so the job is rejected before its first step anywhere else; and
+#     `actions/configure-pages` + `actions/deploy-pages` require the Pages build
+#     type to be `workflow`, while this repository's is `legacy`.
 #
-# The five-file contract (assert before publishing — a half-written tree is
-# worse than a stale one):
+# So the deploy half is kept, gated on the repository actually being in workflow
+# mode, and it stays dormant until somebody decides to move Pages onto it. That
+# decision is a real one — the legacy lane publishes whatever lands on `site`
+# with no build to go wrong, and moving to Actions trades that reliability for
+# the contract check below.
+#
+# WHAT RUNS TODAY is that contract check, which is the part with independent
+# value. There is no build step here by design: the `site` branch root IS the
+# artifact. The one thing worth doing before it reaches anybody is asserting it
+# is whole, because a half-written tree is worse than a stale one:
+#
 #   index.html    the app shell
 #   _index.json   the payload index the app fetches first
 #   manifest.csv  the environment record behind the provenance chip
 #   workflows/    the YAMLs that produced this snapshot
 #   output/       the artifacts themselves
 #
-# Adapted from open.gismo's .github/workflows/build-site.yaml (which publishes
-# its `demo` branch the same way).
+# The check runs on every push to `site` — including the ones run-pipeline.yaml
+# makes when it publishes a snapshot — and from any branch, so it can be
+# exercised without pushing to `site`.
 
 name: Build Site
 
@@ -39,11 +55,17 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  deploy:
+  # ---------------------------------------------------------------------------
+  # No `environment:` here on purpose: an environment with a branch policy
+  # rejects the whole job before its first step, which is what made the previous
+  # version unrunnable anywhere but `site`. This job has to be able to run
+  # wherever it is asked to.
+  # ---------------------------------------------------------------------------
+  contract:
+    name: Assert the site branch is whole
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+    outputs:
+      pages_build_type: ${{ steps.pages.outputs.build_type }}
     steps:
       - name: Check out the site branch
         uses: actions/checkout@v4
@@ -56,16 +78,83 @@ jobs:
           set -euo pipefail
           fail=0
           for f in index.html _index.json manifest.csv; do
-            if [ ! -f "$f" ]; then echo "MISSING FILE: $f"; fail=1; fi
+            if [ ! -f "$f" ]; then echo "::error::MISSING FILE: $f"; fail=1; fi
           done
           for d in workflows output; do
-            if [ ! -d "$d" ]; then echo "MISSING DIRECTORY: $d"; fail=1; fi
+            if [ ! -d "$d" ]; then echo "::error::MISSING DIRECTORY: $d"; fail=1; fi
           done
           if [ "$fail" -ne 0 ]; then
-            echo "The site branch does not satisfy the artifact contract — refusing to publish."
+            echo "::error::The site branch does not satisfy the artifact contract — refusing to publish."
             exit 1
           fi
           echo "Contract satisfied: index.html, _index.json, manifest.csv, workflows/, output/"
+
+      - name: Report what the snapshot says about itself
+        run: |
+          set -euo pipefail
+          {
+            echo "### The site branch"
+            echo
+            if [ -f snapshots.json ]; then
+              echo '```json'
+              cat snapshots.json
+              echo '```'
+            else
+              echo "_No snapshots.json on the site branch._"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Which lane publishes this site?
+        id: pages
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          info="$(gh api "repos/$REPO/pages" 2>/dev/null || true)"
+          if [ -z "$info" ]; then
+            echo "build_type=unknown" >> "$GITHUB_OUTPUT"
+            echo "Could not read the Pages configuration; assuming this workflow does not deploy."
+            exit 0
+          fi
+          build_type="$(printf '%s' "$info" | jq -r '.build_type // "unknown"')"
+          source_branch="$(printf '%s' "$info" | jq -r '.source.branch // "-"')"
+          url="$(printf '%s' "$info" | jq -r '.html_url // "-"')"
+          echo "build_type=$build_type" >> "$GITHUB_OUTPUT"
+          {
+            echo
+            echo "### How this site is published"
+            echo
+            echo "- Pages build type: \`$build_type\`"
+            echo "- Source branch: \`$source_branch\`"
+            echo "- URL: $url"
+            echo
+            if [ "$build_type" = "workflow" ]; then
+              echo "This workflow deploys it."
+            else
+              echo "GitHub's legacy branch lane deploys it, straight from \`$source_branch\`. The deploy job below stays skipped; it lights up on its own if Pages is switched to \`workflow\`."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # ---------------------------------------------------------------------------
+  # Dormant unless somebody moves Pages onto Actions. Kept rather than deleted
+  # because the contract check above is only a gate if something downstream is
+  # gated by it, and this is that something.
+  # ---------------------------------------------------------------------------
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: contract
+    if: ${{ needs.contract.outputs.pages_build_type == 'workflow' && github.ref_name == 'site' }}
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Check out the site branch
+        uses: actions/checkout@v4
+        with:
+          ref: site
+          fetch-depth: 1
 
       - name: Configure Pages
         uses: actions/configure-pages@v4
