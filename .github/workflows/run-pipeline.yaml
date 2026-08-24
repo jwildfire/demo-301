@@ -156,6 +156,12 @@ jobs:
           # having to look it up.
           python3 scripts/publish-snapshot.py ../site "main-${GITHUB_SHA:0:7}" \
             --package-snapshot "gha-${GITHUB_RUN_ID}" --project-dir .
+          # Check the tree before it lands, not after. Pages serves the branch
+          # root verbatim, so this commit is the publication; there is no later
+          # gate to catch a half-written one. Passing this run's own label makes
+          # it an assertion that THIS snapshot was recorded, rather than that
+          # some snapshot was.
+          bash .github/scripts/assert-site-contract.sh ../site "gha-${GITHUB_RUN_ID}"
           git -C ../site add -A
           git -C ../site commit -m "Snapshot from ${GITHUB_SHA:0:7} (run ${GITHUB_RUN_ID})" \
             || echo "Nothing to publish."
