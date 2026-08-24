@@ -74,10 +74,7 @@ jobs:
       - name: Check out the site branch
         uses: actions/checkout@v4
         with:
-          # DELIBERATE BREAK (reverted in the next commit): main carries none of
-          # the five payload files — they are gitignored and written by og_run().
-          # Pointing the check at it is how we find out the assertion can fail.
-          ref: main
+          ref: site
           fetch-depth: 1
 
       - name: Assert the five-file contract

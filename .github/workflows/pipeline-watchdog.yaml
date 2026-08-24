@@ -1,0 +1,113 @@
+# pipeline-watchdog.yaml — notice the weeks `Run Pipeline` does not run at all.
+#
+# run-pipeline.yaml raises an alarm when a run fails. That covers the failure
+# mode this repository actually had (three red Mondays, 2026-08-03 to 08-17)
+# but not the one it is exposed to next: a run that never starts produces no
+# job, no red check, and therefore nothing for a failure alarm to attach to.
+# That happens for at least three ordinary reasons —
+#
+#   * GitHub disables scheduled workflows in a repository with no activity for
+#     60 days, and demo-301 goes quiet for weeks at a time;
+#   * a workflow file that will not parse is skipped in silence;
+#   * a scheduled trigger that is dropped under load is never retried.
+#
+# — and in every one of them the pipeline looks exactly like a pipeline that is
+# working. So this asks the only question that distinguishes them: when did a
+# `Run Pipeline` run last complete on the default branch?
+#
+# Honest limitation: this workflow is itself on a schedule, so the 60-day
+# inactivity disable takes it out at the same time it takes out the thing it
+# watches. It is a second, independent chance to notice — not a guarantee.
+
+name: Pipeline Watchdog
+
+"on":
+  schedule:
+    # Mondays 12:00 UTC — six hours after Run Pipeline is due, which is long
+    # enough for a slow run to have finished and short enough to still be Monday.
+    - cron: '0 12 * * 1'
+  # TEMPORARY (build-site-run rehearsal, removed with this branch): the only way
+  # to make this workflow run without actions:write.
+  push:
+    branches:
+      - build-site-run
+  workflow_dispatch:
+    inputs:
+      max_age_days:
+        description: 'Alarm if no Run Pipeline run completed within this many days'
+        required: false
+        type: string
+        default: '8'
+
+permissions:
+  contents: read
+  issues: write
+  actions: read
+
+concurrency:
+  group: demo-301-watchdog
+  cancel-in-progress: false
+
+jobs:
+  check-freshness:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the alarm script
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: When did Run Pipeline last complete?
+        id: freshness
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          # TEMPORARY (rehearsal): 1 day, so the stale path is taken and the
+          # alarm actually fires. The real default is 8.
+          MAX_AGE_DAYS: ${{ inputs.max_age_days || '1' }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          set -euo pipefail
+          branch="${DEFAULT_BRANCH:-main}"
+          runs="$(gh api \
+            "repos/$REPO/actions/workflows/run-pipeline.yaml/runs?branch=$branch&status=completed&per_page=1" \
+            --jq '.workflow_runs[0] | "\(.created_at)\t\(.conclusion)\t\(.html_url)"' || true)"
+
+          if [ -z "$runs" ]; then
+            echo "stale=true"                                        >> "$GITHUB_OUTPUT"
+            echo "note=No completed \`Run Pipeline\` run exists on \`$branch\` at all." >> "$GITHUB_OUTPUT"
+            echo "No completed run found."
+            exit 0
+          fi
+
+          created="${runs%%$'\t'*}"
+          rest="${runs#*$'\t'}"
+          conclusion="${rest%%$'\t'*}"
+          url="${rest#*$'\t'}"
+
+          age_days=$(( ( $(date -u +%s) - $(date -u -d "$created" +%s) ) / 86400 ))
+          echo "Last completed run: $created ($conclusion), $age_days days ago — $url"
+          echo "last_run=$url" >> "$GITHUB_OUTPUT"
+
+          if [ "$age_days" -gt "$MAX_AGE_DAYS" ]; then
+            echo "stale=true" >> "$GITHUB_OUTPUT"
+            {
+              echo "note=The last completed \`Run Pipeline\` run on \`$branch\` was **$age_days days ago** ($created, $conclusion): $url — and it is scheduled weekly. Something is stopping it from firing."
+            } >> "$GITHUB_OUTPUT"
+          else
+            echo "stale=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Raise the alarm
+        if: ${{ steps.freshness.outputs.stale == 'true' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          MODE: stale
+          ALARM_REF: refs/heads/${{ github.event.repository.default_branch }}
+          STALE_NOTE: ${{ steps.freshness.outputs.note }}
+        run: bash .github/scripts/pipeline-alarm.sh
+
+      - name: Say so when it is fine
+        if: ${{ steps.freshness.outputs.stale != 'true' }}
+        run: echo "Run Pipeline ran recently enough — nothing to report."
