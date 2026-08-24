@@ -44,6 +44,12 @@ name: Run Pipeline
   schedule:
     # Weekly, Mondays 06:00 UTC.
     - cron: '0 6 * * 1'
+  # TEMPORARY (pipeline-deps rehearsal, remove before merge): the obotclaw app
+  # has no actions:write, so it cannot dispatch a workflow. A push trigger on
+  # this one branch is how the fix gets exercised before it reaches main.
+  push:
+    branches:
+      - pipeline-deps
 
 permissions:
   contents: write
@@ -58,7 +64,10 @@ jobs:
   run-pipeline:
     runs-on: ubuntu-latest
     env:
-      SITE_BRANCH: site
+      # TEMPORARY (pipeline-deps rehearsal, remove before merge): publish to a
+      # scratch branch, so the publish path is exercised end to end without
+      # touching the live site.
+      SITE_BRANCH: ${{ github.ref_name == 'pipeline-deps' && 'site-rehearsal' || 'site' }}
     steps:
       - name: Check out the study repo
         uses: actions/checkout@v4
@@ -117,7 +126,7 @@ jobs:
         run: Rscript scripts/run-pipeline.R .
 
       - name: Publish the snapshot to the site branch
-        if: ${{ github.event_name == 'schedule' || inputs.publish }}
+        if: ${{ github.event_name == 'schedule' || github.event_name == 'push' || inputs.publish }}
         run: |
           set -euo pipefail
           git config user.name  'github-actions[bot]'
