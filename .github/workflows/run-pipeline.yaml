@@ -58,10 +58,6 @@ name: Run Pipeline
   schedule:
     # Weekly, Mondays 06:00 UTC.
     - cron: '0 6 * * 1'
-  # TEMPORARY (site-contract-gate rehearsal, removed before merge).
-  push:
-    branches:
-      - site-contract-gate
 
 permissions:
   contents: write
@@ -76,8 +72,7 @@ jobs:
   run-pipeline:
     runs-on: ubuntu-latest
     env:
-      # TEMPORARY (site-contract-gate rehearsal, removed before merge).
-      SITE_BRANCH: ${{ github.ref_name == 'site-contract-gate' && 'site-rehearsal' || 'site' }}
+      SITE_BRANCH: site
     steps:
       - name: Check out the study repo
         uses: actions/checkout@v4
@@ -136,7 +131,7 @@ jobs:
         run: Rscript scripts/run-pipeline.R .
 
       - name: Publish the snapshot to the site branch
-        if: ${{ github.event_name == 'schedule' || github.event_name == 'push' || inputs.publish }}
+        if: ${{ github.event_name == 'schedule' || inputs.publish }}
         run: |
           set -euo pipefail
           git config user.name  'github-actions[bot]'
