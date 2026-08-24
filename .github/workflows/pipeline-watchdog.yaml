@@ -85,7 +85,7 @@ jobs:
           if [ "$age_days" -gt "$MAX_AGE_DAYS" ]; then
             echo "stale=true" >> "$GITHUB_OUTPUT"
             {
-              echo "note=The last completed \`Run Pipeline\` run on \`$branch\` was **$age_days days ago** ($created, $conclusion): $url — and it is scheduled weekly. Something is stopping it from firing."
+              echo "note=The last completed \`Run Pipeline\` run on \`$branch\` was $age_days days ago ($created, $conclusion): $url — and it is scheduled weekly. Something is stopping it from firing."
             } >> "$GITHUB_OUTPUT"
           else
             echo "stale=false" >> "$GITHUB_OUTPUT"
