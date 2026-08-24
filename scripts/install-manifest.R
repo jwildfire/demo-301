@@ -199,3 +199,60 @@ for (i in seq_len(nrow(manifest))) {
   message(sprintf("  %-14s %-12s %s%s", pkg, version, substr(trimws(manifest$sha[[i]]), 1, 10), flag))
   if (identical(version, "NOT INSTALLED")) fail(pkg, " is not loadable after installation")
 }
+
+# --- 6. does the pinned build actually contain what this project calls? -----
+#
+# A stale pin does not announce itself. Both of the ones found on 2026-08-24
+# carried exactly the version string manifest.csv claimed for them while
+# pointing at a commit from before the code the project needs: gsm.safety was
+# pinned at a pre-1.0.0 commit missing the four functions the safety workflows
+# call, and open.gismo at a commit whose bundled app shell was a quarter the
+# size of the one the site actually serves. Comparing version numbers finds
+# neither. Resolving the symbols does.
+#
+# Sixty seconds here, or twenty minutes into a pipeline run — the failure
+# arrives either way, and this is the cheaper place for it.
+message("\n=== checking the pinned builds export what this project calls ===")
+
+sources <- c(
+  list.files(file.path(project_dir, "scripts"), pattern = "[.]R$", full.names = TRUE),
+  list.files(file.path(project_dir, "workflows"), pattern = "[.]ya?ml$",
+             recursive = TRUE, full.names = TRUE)
+)
+pattern <- sprintf("(%s)::[A-Za-z._][A-Za-z0-9._]*", paste(gsub("[.]", "[.]", pkgs), collapse = "|"))
+refs <- unique(unlist(lapply(sources, function(f) {
+  txt <- readLines(f, warn = FALSE)
+  m <- regmatches(txt, gregexpr(pattern, txt))
+  unlist(m)
+})))
+refs <- sort(refs[nzchar(refs)])
+
+if (!length(refs)) {
+  message("  no pkg::name references found in scripts/ or workflows/ — nothing to check")
+} else {
+  missing <- character(0)
+  for (ref in refs) {
+    parts <- strsplit(ref, "::", fixed = TRUE)[[1]]
+    ok <- !inherits(
+      try(getExportedValue(parts[[1]], parts[[2]]), silent = TRUE),
+      "try-error"
+    )
+    if (!ok) missing <- c(missing, ref)
+  }
+  message("  ", length(refs), " references checked, ", length(missing), " unresolved")
+  if (length(missing)) {
+    for (ref in missing) {
+      pkg <- strsplit(ref, "::", fixed = TRUE)[[1]][[1]]
+      i <- match(pkg, pkgs)
+      message(
+        "::error::", ref, " does not exist in ", pkg, " ",
+        utils::packageVersion(pkg), " at the pinned commit ",
+        substr(trimws(manifest$sha[[i]]), 1, 10)
+      )
+    }
+    fail(
+      length(missing), " reference(s) the project makes are absent from the ",
+      "pinned builds. The pin is stale, not the code: update manifest.csv."
+    )
+  }
+}

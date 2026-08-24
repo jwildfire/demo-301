@@ -83,8 +83,29 @@ failure_detail() {
   fi
   [ -n "$job_id" ] || return 0
 
-  gh api "repos/$REPO/actions/jobs/$job_id/logs" > "$WORK/job.log" 2>/dev/null || return 0
-  [ -s "$WORK/job.log" ] || return 0
+  # The archived log is not always there the instant the job ends — the first
+  # alarm this script ever raised (issue #5) carried the failing step's name and
+  # no log, because the fetch came back empty seconds after the job finished.
+  # Retry, and if it still cannot be read, say so rather than leaving a silent
+  # gap: an alarm that drops the error without mentioning it is a smaller
+  # version of the problem this file exists to fix.
+  local attempt
+  for attempt in 1 2 3 4; do
+    if gh api "repos/$REPO/actions/jobs/$job_id/logs" > "$WORK/job.log" 2>/dev/null \
+       && [ -s "$WORK/job.log" ]; then
+      break
+    fi
+    : > "$WORK/job.log"
+    # Not `[ ... ] && sleep`: as the last command in the loop body a false test
+    # returns non-zero, and `set -e` would take the function down with it.
+    if [ "$attempt" -lt 4 ]; then sleep $(( attempt * 5 )); fi
+  done
+
+  if [ ! -s "$WORK/job.log" ]; then
+    say "_The failing job's log could not be read back from the API (job \`$job_id\`) — open the run to see it._"
+    say ""
+    return 0
+  fi
 
   # Strip the ISO timestamp Actions prefixes every line with, drop blanks, and
   # keep the tail — where the error is.
