@@ -222,6 +222,10 @@ sources <- c(
 pattern <- sprintf("(%s)::[A-Za-z._][A-Za-z0-9._]*", paste(gsub("[.]", "[.]", pkgs), collapse = "|"))
 refs <- unique(unlist(lapply(sources, function(f) {
   txt <- readLines(f, warn = FALSE)
+  # Comments are dropped first. Both R and YAML comment with `#`, and a comment
+  # that names a function which has since been renamed is a documentation bug,
+  # not a reason to refuse to publish the study for a week.
+  txt <- sub("(^|[[:space:]])#.*$", "", txt)
   m <- regmatches(txt, gregexpr(pattern, txt))
   unlist(m)
 })))
