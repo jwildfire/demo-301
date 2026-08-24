@@ -89,8 +89,11 @@ failure_detail() {
   # Retry, and if it still cannot be read, say so rather than leaving a silent
   # gap: an alarm that drops the error without mentioning it is a smaller
   # version of the problem this file exists to fix.
+  # Two attempts, not more: when this runs inside the run it is reporting on the
+  # log is never there, and the annotations fallback below is the real path.
+  # The retry is kept for the case where that stops being true.
   local attempt
-  for attempt in 1 2 3 4; do
+  for attempt in 1 2; do
     if gh api "repos/$REPO/actions/jobs/$job_id/logs" > "$WORK/job.log" 2>/dev/null \
        && [ -s "$WORK/job.log" ]; then
       break
@@ -98,7 +101,7 @@ failure_detail() {
     : > "$WORK/job.log"
     # Not `[ ... ] && sleep`: as the last command in the loop body a false test
     # returns non-zero, and `set -e` would take the function down with it.
-    if [ "$attempt" -lt 4 ]; then sleep $(( attempt * 5 )); fi
+    if [ "$attempt" -lt 2 ]; then sleep 5; fi
   done
 
   if [ ! -s "$WORK/job.log" ]; then
