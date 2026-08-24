@@ -20,7 +20,16 @@
 #     SHA pinned in manifest.csv and running R CMD INSTALL, rather than via
 #     pak::pkg_install(). pak resolves GitHub refs through api.github.com,
 #     which SSO/SAML-protected orgs reject even for public repos; a plain git
-#     clone of a public repo does not hit that path.
+#     clone of a public repo does not hit that path. The clone, the CRAN
+#     dependency resolution and the install order all live in
+#     scripts/install-manifest.R — see its header for why the obvious
+#     one-liners do not work here.
+#
+# Failures are announced. `report-status` raises a GitHub issue when the run
+# fails and closes it when the run recovers, because three red Mondays in a row
+# went unnoticed (2026-08-03, 08-10, 08-17) while the only signal was a red
+# check on a tab nobody opens. pipeline-watchdog.yaml covers the other half:
+# the weeks this workflow does not run at all.
 
 name: Run Pipeline
 
@@ -53,6 +62,10 @@ jobs:
     steps:
       - name: Check out the study repo
         uses: actions/checkout@v4
+        with:
+          # The publish step pushes to the site branch out of this checkout;
+          # a shallow one cannot.
+          fetch-depth: 0
 
       - name: Set up R
         uses: r-lib/actions/setup-r@v2
@@ -60,12 +73,20 @@ jobs:
           r-version: 'release'
           use-public-rspm: true
 
+      - name: Set up pandoc
+        # gsm.kri::Report_KRI renders an Rmd; the runner image has no pandoc.
+        uses: r-lib/actions/setup-pandoc@v2
+
       - name: Install system dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev
 
-      - name: Install CRAN dependencies
+      - name: Install the CRAN packages the project's own scripts import
+        # scripts/*.R use these directly, independent of any pinned package.
+        # Everything the pinned packages themselves need is resolved from their
+        # DESCRIPTIONs by install-manifest.R in the next step; this step is here
+        # for the ones nothing declares, and for the library cache it keeps.
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
           packages: |
@@ -74,27 +95,15 @@ jobs:
             any::dplyr
             any::purrr
             any::tidyr
+            any::rlang
             any::htmlwidgets
-            any::remotes
 
-      - name: Install pipeline packages pinned in manifest.csv
-        run: |
-          set -euo pipefail
-          mkdir -p /tmp/pkgsrc
-          # Column order is fixed by the manifest contract:
-          #   org,package,version,repository,url,sha
-          tail -n +2 manifest.csv | while IFS=, read -r org package version repository url sha; do
-            [ -z "$package" ] && continue
-            echo "::group::$org/$package ($version)"
-            git clone --quiet "https://github.com/$org/$package.git" "/tmp/pkgsrc/$package"
-            if [ -n "$sha" ]; then
-              git -C "/tmp/pkgsrc/$package" checkout --quiet "$sha"
-            else
-              echo "WARNING: no SHA pinned for $package — installing the default branch tip."
-            fi
-            R CMD INSTALL --no-docs --no-multiarch "/tmp/pkgsrc/$package"
-            echo "::endgroup::"
-          done
+      - name: Install the packages pinned in manifest.csv
+        # Clones each repo at its pinned SHA, installs the CRAN dependencies the
+        # DESCRIPTIONs declare, then installs the pinned packages in dependency
+        # order. Doing it in manifest order fails: gsm.reporting is listed
+        # before workr and imports it.
+        run: Rscript scripts/install-manifest.R . /tmp/pkgsrc
 
       - name: Validate input data against the mapping specs
         run: Rscript -e 'v <- open.gismo::og_validate("."); print(v); if (any(v$status %in% c("missing", "error"))) stop("Input validation failed.")'
@@ -126,9 +135,48 @@ jobs:
           fi
           # Arranges the site branch root (current snapshot, flat) and the
           # ps-NNN/ history directory, and updates snapshots.json.
-          python3 scripts/publish-snapshot.py ../site "gha-${GITHUB_RUN_ID}" \
-            --package-snapshot "manifest-${GITHUB_SHA:0:7}" --project-dir .
+          # input_data_version names the commit the input/ layer came from;
+          # package_snapshot names the environment that produced the artifacts.
+          # `gha-` is the counterpart of the local lane's `local-YYYY-MM-DD`, so
+          # the provenance chip says which lane built a snapshot without anyone
+          # having to look it up.
+          python3 scripts/publish-snapshot.py ../site "main-${GITHUB_SHA:0:7}" \
+            --package-snapshot "gha-${GITHUB_RUN_ID}" --project-dir .
           git -C ../site add -A
           git -C ../site commit -m "Snapshot from ${GITHUB_SHA:0:7} (run ${GITHUB_RUN_ID})" \
             || echo "Nothing to publish."
           git -C ../site push origin "$SITE_BRANCH"
+
+  # ---------------------------------------------------------------------------
+  # The signal. Three scheduled runs failed before this existed and the only
+  # record was a red check in the Actions tab, which is not a place anybody
+  # looks on a Monday morning. This raises an assigned GitHub issue on failure —
+  # assignment is what turns it into an email — and closes that issue when a
+  # run goes green again, so the alarm clears itself rather than becoming noise.
+  # ---------------------------------------------------------------------------
+  report-status:
+    name: Raise or clear the pipeline alarm
+    needs: run-pipeline
+    if: ${{ always() && needs.run-pipeline.result != 'cancelled' && needs.run-pipeline.result != 'skipped' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      # Reading the failing step's name and log out of the run, so the issue
+      # carries the error instead of only a link to it.
+      actions: read
+    steps:
+      - name: Check out the alarm script
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Raise or clear the alarm
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          MODE: ${{ needs.run-pipeline.result == 'success' && 'success' || 'failure' }}
+          ALARM_REF: ${{ github.ref }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: bash .github/scripts/pipeline-alarm.sh
