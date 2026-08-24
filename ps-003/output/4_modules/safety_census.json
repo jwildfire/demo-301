@@ -1,0 +1,200 @@
+{
+  "Census": [
+    {
+      "Label": "Enrolled participants",
+      "Value": 765,
+      "Denominator": null,
+      "Group": "Census"
+    },
+    {
+      "Label": "Randomised to an arm",
+      "Value": 765,
+      "Denominator": 765,
+      "Group": "Census"
+    },
+    {
+      "Label": "Received study drug",
+      "Value": 741,
+      "Denominator": 765,
+      "Group": "Census"
+    },
+    {
+      "Label": "Deaths",
+      "Value": 5,
+      "Denominator": 765,
+      "Group": "Census"
+    },
+    {
+      "Label": "Person-years on study",
+      "Value": 94.1,
+      "Denominator": null,
+      "Group": "Exposure"
+    },
+    {
+      "Label": "Person-years on treatment",
+      "Value": 49.8,
+      "Denominator": null,
+      "Group": "Exposure"
+    },
+    {
+      "Label": "Median days on treatment",
+      "Value": 22,
+      "Denominator": null,
+      "Group": "Exposure"
+    },
+    {
+      "Label": "Participants with a lab result",
+      "Value": 765,
+      "Denominator": 765,
+      "Group": "Follow-up"
+    },
+    {
+      "Label": "Participants with an ECG",
+      "Value": 765,
+      "Denominator": 765,
+      "Group": "Follow-up"
+    },
+    {
+      "Label": "Participants with a reported AE",
+      "Value": 616,
+      "Denominator": 765,
+      "Group": "Follow-up"
+    },
+    {
+      "Label": "Participants with a disposition record",
+      "Value": 765,
+      "Denominator": 765,
+      "Group": "Follow-up"
+    }
+  ],
+  "Coverage": [
+    {
+      "Domain": "Labs",
+      "Visit": "Baseline",
+      "VisitNum": 1,
+      "Participants": 765,
+      "Expected": 765
+    },
+    {
+      "Domain": "Labs",
+      "Visit": "Week 1",
+      "VisitNum": 2,
+      "Participants": 646,
+      "Expected": 765
+    },
+    {
+      "Domain": "Labs",
+      "Visit": "Week 2",
+      "VisitNum": 3,
+      "Participants": 560,
+      "Expected": 765
+    },
+    {
+      "Domain": "Labs",
+      "Visit": "Week 3",
+      "VisitNum": 4,
+      "Participants": 479,
+      "Expected": 765
+    },
+    {
+      "Domain": "Labs",
+      "Visit": "Week 4",
+      "VisitNum": 5,
+      "Participants": 400,
+      "Expected": 765
+    },
+    {
+      "Domain": "Labs",
+      "Visit": "Week 6",
+      "VisitNum": 6,
+      "Participants": 264,
+      "Expected": 765
+    },
+    {
+      "Domain": "Labs",
+      "Visit": "Week 8",
+      "VisitNum": 7,
+      "Participants": 158,
+      "Expected": 765
+    },
+    {
+      "Domain": "Labs",
+      "Visit": "Week 12",
+      "VisitNum": 8,
+      "Participants": 17,
+      "Expected": 765
+    },
+    {
+      "Domain": "Labs",
+      "Visit": "Week 16",
+      "VisitNum": 9,
+      "Participants": 286,
+      "Expected": 765
+    },
+    {
+      "Domain": "ECG",
+      "Visit": "Baseline",
+      "VisitNum": 1,
+      "Participants": 765,
+      "Expected": 765
+    },
+    {
+      "Domain": "ECG",
+      "Visit": "Week 4",
+      "VisitNum": 2,
+      "Participants": 400,
+      "Expected": 765
+    },
+    {
+      "Domain": "ECG",
+      "Visit": "Week 8",
+      "VisitNum": 3,
+      "Participants": 158,
+      "Expected": 765
+    },
+    {
+      "Domain": "ECG",
+      "Visit": "Week 12",
+      "VisitNum": 4,
+      "Participants": 17,
+      "Expected": 765
+    },
+    {
+      "Domain": "ECG",
+      "Visit": "Week 16",
+      "VisitNum": 5,
+      "Participants": 286,
+      "Expected": 765
+    }
+  ],
+  "Disposition": [
+    {
+      "State": "Completed",
+      "Participants": 621
+    },
+    {
+      "State": "Discontinued - Withdrew Consent",
+      "Participants": 41
+    },
+    {
+      "State": "Discontinued - Adverse Event",
+      "Participants": 35
+    },
+    {
+      "State": "Discontinued - Lost To Follow-up",
+      "Participants": 35
+    },
+    {
+      "State": "Discontinued - Physician Decision",
+      "Participants": 20
+    },
+    {
+      "State": "Discontinued - Protocol Deviation",
+      "Participants": 8
+    },
+    {
+      "State": "Died",
+      "Participants": 5
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "snapshot_id": "ps-003",
+  "created_at": "2026-08-24T07:08:05Z",
+  "input_data_version": "main-bad129c",
+  "package_snapshot": "gha-32699839594",
+  "previous_snapshots": [
+    "ps-001",
+    "ps-002"
+  ]
+}
