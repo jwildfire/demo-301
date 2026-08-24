@@ -58,6 +58,10 @@ name: Run Pipeline
   schedule:
     # Weekly, Mondays 06:00 UTC.
     - cron: '0 6 * * 1'
+  # TEMPORARY (site-contract-gate rehearsal, removed before merge).
+  push:
+    branches:
+      - site-contract-gate
 
 permissions:
   contents: write
@@ -72,7 +76,8 @@ jobs:
   run-pipeline:
     runs-on: ubuntu-latest
     env:
-      SITE_BRANCH: site
+      # TEMPORARY (site-contract-gate rehearsal, removed before merge).
+      SITE_BRANCH: ${{ github.ref_name == 'site-contract-gate' && 'site-rehearsal' || 'site' }}
     steps:
       - name: Check out the study repo
         uses: actions/checkout@v4
@@ -131,7 +136,7 @@ jobs:
         run: Rscript scripts/run-pipeline.R .
 
       - name: Publish the snapshot to the site branch
-        if: ${{ github.event_name == 'schedule' || inputs.publish }}
+        if: ${{ github.event_name == 'schedule' || github.event_name == 'push' || inputs.publish }}
         run: |
           set -euo pipefail
           git config user.name  'github-actions[bot]'
@@ -161,6 +166,11 @@ jobs:
           # gate to catch a half-written one. Passing this run's own label makes
           # it an assertion that THIS snapshot was recorded, rather than that
           # some snapshot was.
+          # DELIBERATE BREAK (removed in the next commit): take two payload
+          # entries back out of the assembled tree, so the gate has something
+          # real to refuse. A gate nobody has watched refuse is not a gate.
+          rm -f ../site/_index.json
+          rm -rf ../site/config
           bash .github/scripts/assert-site-contract.sh ../site "gha-${GITHUB_RUN_ID}"
           git -C ../site add -A
           git -C ../site commit -m "Snapshot from ${GITHUB_SHA:0:7} (run ${GITHUB_RUN_ID})" \
