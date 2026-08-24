@@ -11,6 +11,12 @@
       "created_at": "2026-07-29T10:38:24Z",
       "input_data_version": "cut-2",
       "package_snapshot": "local-2026-07-29"
+    },
+    {
+      "snapshot_id": "ps-003",
+      "created_at": "2026-08-24T01:19:18Z",
+      "input_data_version": "main-2088c82",
+      "package_snapshot": "gha-32679109589"
     }
   ]
 }
