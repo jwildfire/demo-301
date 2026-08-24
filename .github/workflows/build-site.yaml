@@ -27,6 +27,11 @@ name: Build Site
   push:
     branches:
       - site
+      # TEMPORARY (build-site-run rehearsal, remove before merge): the obotclaw
+      # app has no actions:write and cannot dispatch a workflow, and `site` is
+      # not a branch an agent may push. This is how the workflow gets run at
+      # all. It checks out `site` explicitly, so what it tests is the real tree.
+      - build-site-run
   workflow_dispatch:
 
 permissions:
