@@ -102,7 +102,20 @@ failure_detail() {
   done
 
   if [ ! -s "$WORK/job.log" ]; then
-    say "_The failing job's log could not be read back from the API (job \`$job_id\`) — open the run to see it._"
+    # It never can be, from inside the run it is reporting on: the archived log
+    # is published when the RUN finalises, and this job is part of that run. So
+    # fall back to the check run's annotations, which are attached as soon as the
+    # failing job itself finishes. Those are the `::error::` lines — the actual
+    # error, which is the thing worth carrying in the alarm.
+    if gh api "repos/$REPO/check-runs/$job_id/annotations" > "$WORK/ann.json" 2>/dev/null \
+       && jq -e '[.[] | select(.annotation_level == "failure")] | length > 0' "$WORK/ann.json" >/dev/null 2>&1; then
+      say "\`\`\`"
+      jq -r '.[] | select(.annotation_level == "failure") | .message' "$WORK/ann.json" | head -n 30
+      say "\`\`\`"
+      say ""
+      return 0
+    fi
+    say "_Neither the failing job's log nor its annotations could be read back from the API (job \`$job_id\`) — open the run to see it._"
     say ""
     return 0
   fi
