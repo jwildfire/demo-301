@@ -1,17 +1,31 @@
-# run-pipeline.yaml — TEMPLATE, NOT YET EXERCISED.
+# run-pipeline.yaml — the weekly Actions lane. It runs, and it publishes.
 #
-# Status (2026-07-28, hub#134 stage 3): this workflow is a plausible, reviewed
-# sketch of the Actions lane. It has never been run. The lane that is real
-# today is the LOCAL one:
+# Status (2026-08-24, demo-301#4). This workflow now runs green end to end and
+# writes a snapshot onto the `site` branch. First green run: https://github.com/jwildfire/demo-301/actions/runs/32679109589.
+#
+# Its previous header said it had never been run, which was true when it was
+# written on 2026-07-28 and had become false in the worst direction: it had run
+# three times, on 2026-08-03, 08-10 and 08-17, and failed every time. Nobody
+# heard any of them. Both halves of that are fixed here — the run, and the not
+# hearing. Do not restore a "not yet exercised" caveat to this file; if this
+# lane stops working the alarm below says so, and a stale caveat in a header is
+# not a substitute for a signal.
+#
+# There is still a LOCAL lane, and it remains the fast one:
 #
 #   R -e 'open.gismo::og_validate(".")'
 #   R -e 'open.gismo::og_run(".")'
 #   R -e 'open.gismo::og_app(".")'
 #
-# Local runs and Actions runs are supposed to write the identical static tree
-# (_index.json, status.json, manifest.csv, output/{phase}/{workflow}/...), so
-# turning this on is an acceptance step, not a rewrite. Do not assume it is
-# green until a run is recorded on this repo.
+# The two are supposed to write the identical static tree (_index.json,
+# status.json, manifest.csv, output/{phase}/{workflow}/...). What tells them
+# apart on the published site is the snapshot's `package_snapshot` field:
+# `local-YYYY-MM-DD` for a local run, `gha-<run id>` for this one.
+#
+# One difference is real rather than cosmetic. The local lane accumulates each
+# run's results under a gitignored history/, which gsm.reporting::CalculateChange
+# reads to fill the "since last snapshot" columns. A fresh Actions checkout has
+# no history/, so a snapshot published from here has no change columns to show.
 #
 # Adapted from open.gismo's .github/workflows/run-pipeline.yaml, with two
 # deliberate changes:
@@ -44,12 +58,6 @@ name: Run Pipeline
   schedule:
     # Weekly, Mondays 06:00 UTC.
     - cron: '0 6 * * 1'
-  # TEMPORARY (pipeline-deps rehearsal, remove before merge): the obotclaw app
-  # has no actions:write, so it cannot dispatch a workflow. A push trigger on
-  # this one branch is how the fix gets exercised before it reaches main.
-  push:
-    branches:
-      - pipeline-deps
 
 permissions:
   contents: write
@@ -64,10 +72,7 @@ jobs:
   run-pipeline:
     runs-on: ubuntu-latest
     env:
-      # TEMPORARY (pipeline-deps rehearsal, remove before merge): publish to a
-      # scratch branch, so the publish path is exercised end to end without
-      # touching the live site.
-      SITE_BRANCH: ${{ github.ref_name == 'pipeline-deps' && 'site-rehearsal' || 'site' }}
+      SITE_BRANCH: site
     steps:
       - name: Check out the study repo
         uses: actions/checkout@v4
@@ -126,7 +131,7 @@ jobs:
         run: Rscript scripts/run-pipeline.R .
 
       - name: Publish the snapshot to the site branch
-        if: ${{ github.event_name == 'schedule' || github.event_name == 'push' || inputs.publish }}
+        if: ${{ github.event_name == 'schedule' || inputs.publish }}
         run: |
           set -euo pipefail
           git config user.name  'github-actions[bot]'

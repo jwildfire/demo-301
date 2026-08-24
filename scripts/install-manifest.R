@@ -25,11 +25,18 @@
 #   2. read every DESCRIPTION and take the union of Depends/Imports/LinkingTo,
 #   3. install the CRAN packages in that union that are not already present,
 #   4. topologically sort the manifest packages by their dependencies on each
-#      other, and `R CMD INSTALL` them in that order.
+#      other, and `R CMD INSTALL` them in that order,
+#   5. print what was installed against what the manifest claimed,
+#   6. resolve every `pkg::name` that scripts/ and workflows/ reference against
+#      what was just installed, and refuse the run if any of them is absent.
 #
 # Step 4 is not decoration. manifest.csv lists gsm.reporting before workr, and
 # gsm.reporting Imports workr, so installing in file order fails even once the
 # CRAN half is resolved.
+#
+# Step 6 is not decoration either — see its own comment. Two of the eight pins
+# in this manifest were stale on 2026-08-24 and both of them carried exactly
+# the version string the manifest claimed for them.
 #
 # Usage:
 #   Rscript scripts/install-manifest.R [project_dir] [source_dir]
