@@ -1,0 +1,85 @@
+{
+  "reports": [
+    {
+      "id": "ae_explorer",
+      "title": "Adverse Event Explorer Report",
+      "description": "Interactive safety.viz adverse event explorer with per-arm prevalence, between-arm differences, and participant drill-down. Reads the same Mapped_AE rows the Adverse Event Rate KRI counts.",
+      "data": "Mapped_AE",
+      "html": "output/4_modules/ae_explorer/ae_explorer.html",
+      "status": "completed",
+      "error": null
+    },
+    {
+      "id": "ae_timelines",
+      "title": "AE Timelines Report",
+      "description": "Interactive safety.viz adverse-event timelines, one row per participant, on the study days the events were recorded against.",
+      "data": "Mapped_AE",
+      "html": "output/4_modules/ae_timelines/ae_timelines.html",
+      "status": "completed",
+      "error": null
+    },
+    {
+      "id": "hep_explorer",
+      "title": "Hepatic Safety Explorer Report",
+      "description": "Interactive safety.viz eDISH hepatic safety explorer with Hy's Law quadrants and participant drill-down, over the study's own liver chemistry.",
+      "data": "Mapped_LB",
+      "html": "output/4_modules/hep_explorer/hep_explorer.html",
+      "status": "completed",
+      "error": null
+    },
+    {
+      "id": "qt_explorer",
+      "title": "QT Safety Explorer Report",
+      "description": "Interactive safety.viz QT/QTc safety explorer with central tendency against the ICH E14 threshold, outlier scatter, and categorical summaries. Change from baseline is the `egchg` the ECG mapping derived.",
+      "data": "Mapped_EG",
+      "html": "output/4_modules/qt_explorer/qt_explorer.html",
+      "status": "completed",
+      "error": null
+    },
+    {
+      "id": "safety_delta_delta",
+      "title": "Safety Delta-Delta Report",
+      "description": "Interactive safety.viz delta-delta plot of change from baseline in two laboratory measures, on the study's own visit schedule.",
+      "data": "Mapped_LB",
+      "html": "output/4_modules/safety_delta_delta/safety_delta_delta.html",
+      "status": "completed",
+      "error": null
+    },
+    {
+      "id": "safety_histogram",
+      "title": "Safety Histogram Report",
+      "description": "Interactive safety.viz histogram of the study's laboratory results, read from the same Mapped_LB domain the Grade 3+ Lab Abnormality KRI is computed from.",
+      "data": "Mapped_LB",
+      "html": "output/4_modules/safety_histogram/safety_histogram.html",
+      "status": "completed",
+      "error": null
+    },
+    {
+      "id": "safety_outlier_explorer",
+      "title": "Safety Outlier Explorer Report",
+      "description": "Interactive safety.viz outlier explorer over the study's laboratory results, with the reference range each result was graded against.",
+      "data": "Mapped_LB",
+      "html": "output/4_modules/safety_outlier_explorer/safety_outlier_explorer.html",
+      "status": "completed",
+      "error": null
+    },
+    {
+      "id": "safety_results_over_time",
+      "title": "Safety Results Over Time Report",
+      "description": "Interactive safety.viz results-over-time chart of the study's laboratory results across the scheduled visits.",
+      "data": "Mapped_LB",
+      "html": "output/4_modules/safety_results_over_time/safety_results_over_time.html",
+      "status": "completed",
+      "error": null
+    },
+    {
+      "id": "safety_shift_plot",
+      "title": "Safety Shift Plot Report",
+      "description": "Interactive safety.viz shift plot pairing each participant's baseline laboratory result with their Week 4 result.",
+      "data": "Mapped_LB",
+      "html": "output/4_modules/safety_shift_plot/safety_shift_plot.html",
+      "status": "completed",
+      "error": null
+    }
+  ]
+}

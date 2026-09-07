@@ -1,0 +1,174 @@
+{
+  "reports": [
+    {
+      "id": "report_kri_country",
+      "title": "Country-Level Key Risk Indicator Report",
+      "html": "output/4_modules/report_kri_country/kri_report_AAAA0000000_Country_20120524.html",
+      "group_level": "Country"
+    },
+    {
+      "id": "report_kri_site",
+      "title": "Site-Level Key Risk Indicator Report",
+      "html": "output/4_modules/report_kri_site/kri_report_AAAA0000000_Site_20120524.html",
+      "group_level": "Site"
+    },
+    {
+      "id": "report_qtl",
+      "title": "QTL Report",
+      "html": "output/4_modules/report_qtl/report_qtl.html",
+      "group_level": "Study"
+    }
+  ],
+  "static_charts": [
+    {
+      "metric": "cou0001",
+      "title": "Adverse Event Rate",
+      "png": "output/4_modules/static/cou0001.png"
+    },
+    {
+      "metric": "cou0002",
+      "title": "Serious Adverse Event Rate",
+      "png": "output/4_modules/static/cou0002.png"
+    },
+    {
+      "metric": "cou0003",
+      "title": "Non-Important Protocol Deviation Rate",
+      "png": "output/4_modules/static/cou0003.png"
+    },
+    {
+      "metric": "cou0004",
+      "title": "Important Protocol Deviation Rate",
+      "png": "output/4_modules/static/cou0004.png"
+    },
+    {
+      "metric": "cou0005",
+      "title": "Grade 3+ Lab Abnormality Rate",
+      "png": "output/4_modules/static/cou0005.png"
+    },
+    {
+      "metric": "cou0006",
+      "title": "Study Discontinuation Rate",
+      "png": "output/4_modules/static/cou0006.png"
+    },
+    {
+      "metric": "cou0007",
+      "title": "Treatment Discontinuation Rate",
+      "png": "output/4_modules/static/cou0007.png"
+    },
+    {
+      "metric": "cou0008",
+      "title": "Query Rate",
+      "png": "output/4_modules/static/cou0008.png"
+    },
+    {
+      "metric": "cou0009",
+      "title": "Delayed Query Resolution Rate",
+      "png": "output/4_modules/static/cou0009.png"
+    },
+    {
+      "metric": "cou0010",
+      "title": "Delayed Data Entry Rate",
+      "png": "output/4_modules/static/cou0010.png"
+    },
+    {
+      "metric": "cou0011",
+      "title": "Data Change Rate",
+      "png": "output/4_modules/static/cou0011.png"
+    },
+    {
+      "metric": "cou0012",
+      "title": "Screen Failure Rate",
+      "png": "output/4_modules/static/cou0012.png"
+    },
+    {
+      "metric": "kri0001",
+      "title": "Adverse Event Rate",
+      "png": "output/4_modules/static/kri0001.png"
+    },
+    {
+      "metric": "kri0002",
+      "title": "Serious Adverse Event Rate",
+      "png": "output/4_modules/static/kri0002.png"
+    },
+    {
+      "metric": "kri0003",
+      "title": "Non-Important Protocol Deviation Rate",
+      "png": "output/4_modules/static/kri0003.png"
+    },
+    {
+      "metric": "kri0004",
+      "title": "Important Protocol Deviation Rate",
+      "png": "output/4_modules/static/kri0004.png"
+    },
+    {
+      "metric": "kri0005",
+      "title": "Grade 3+ Lab Abnormality Rate",
+      "png": "output/4_modules/static/kri0005.png"
+    },
+    {
+      "metric": "kri0006",
+      "title": "Study Discontinuation Rate",
+      "png": "output/4_modules/static/kri0006.png"
+    },
+    {
+      "metric": "kri0007",
+      "title": "Treatment Discontinuation Rate",
+      "png": "output/4_modules/static/kri0007.png"
+    },
+    {
+      "metric": "kri0008",
+      "title": "Query Rate",
+      "png": "output/4_modules/static/kri0008.png"
+    },
+    {
+      "metric": "kri0009",
+      "title": "Delayed Query Resolution Rate",
+      "png": "output/4_modules/static/kri0009.png"
+    },
+    {
+      "metric": "kri0010",
+      "title": "Delayed Data Entry Rate",
+      "png": "output/4_modules/static/kri0010.png"
+    },
+    {
+      "metric": "kri0011",
+      "title": "Data Change Rate",
+      "png": "output/4_modules/static/kri0011.png"
+    },
+    {
+      "metric": "kri0012",
+      "title": "Screen Failure Rate",
+      "png": "output/4_modules/static/kri0012.png"
+    },
+    {
+      "metric": "qtl0001",
+      "title": "Inclusion/Exclusion Violation Rate",
+      "png": "output/4_modules/static/qtl0001.png"
+    },
+    {
+      "metric": "qtl0002",
+      "title": "Study Discontinuation Rate",
+      "png": "output/4_modules/static/qtl0002.png"
+    },
+    {
+      "metric": "saf0001",
+      "title": "Hy's Law Candidate (Subject)",
+      "png": "output/4_modules/static/saf0001.png"
+    },
+    {
+      "metric": "saf0002",
+      "title": "QTcF Prolongation (Subject)",
+      "png": "output/4_modules/static/saf0002.png"
+    },
+    {
+      "metric": "saf0003",
+      "title": "Serious / Related AE (Subject)",
+      "png": "output/4_modules/static/saf0003.png"
+    },
+    {
+      "metric": "srs0001",
+      "title": "Site Risk Score",
+      "png": "output/4_modules/static/srs0001.png"
+    }
+  ]
+}
