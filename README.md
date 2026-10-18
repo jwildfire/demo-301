@@ -199,3 +199,7 @@ as unpinned rather than given a plausible-looking SHA.
 - Requirement: [obot.roadmap#134 — demo-301 v0](https://github.com/jwildfire/obot.roadmap/issues/134)
 - Design record: [App design, 2026-07-28](https://jwildfire.github.io/obot.roadmap/reports/app-design-2026-07-28/)
 - Engine: [jwildfire/open.gismo](https://github.com/jwildfire/open.gismo)
+
+## License
+
+Apache License 2.0. See [LICENSE](LICENSE).
